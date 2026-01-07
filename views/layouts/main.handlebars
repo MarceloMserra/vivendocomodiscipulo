@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vivendo como Discípulo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,700;1,400&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['Montserrat', 'sans-serif'],
+                        serif: ['Merriweather', 'serif'] 
+                    },
+                    colors: {
+                        imbb: {
+                            navy: '#0F265C',
+                            blue: '#1E40AF',
+                            gold: '#C5A059',
+                            dark: '#0a0a0a'
+                        }
+                    },
+                    backdropBlur: {
+                        xs: '2px',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Fundo com Imagem Fixa */
+        .app-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2;
+            background: url('/img/background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+        
+        /* Máscara Escura (Ajustada para ser mais transparente e preta) */
+        .app-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            /* Gradiente Preto para Azul muito sutil */
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(15, 38, 92, 0.6));
+        }
+
+        /* CARD DE VIDRO (Glassmorphism Moderno) */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.1); 
+            backdrop-filter: blur(10px);           
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Hover no Card */
+        .glass-panel:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Modal de Leitura (Fundo claro para ler melhor) */
+        .glass-reader {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="text-white font-sans antialiased overflow-hidden">
+
+    <div class="app-bg"></div>
+    <div class="app-overlay"></div>
+
+    <div class="mx-auto max-w-md h-screen flex flex-col relative">
+        
+        <header class="p-6 pt-10 shrink-0 relative z-10 flex justify-between items-center">
+            <div onclick="window.location.href='/profile'" class="cursor-pointer">
+                <p class="text-[10px] text-imbb-gold uppercase tracking-[0.2em] font-bold opacity-90">IGREJA MEMORIAL BATISTA</p>
+                <h1 id="userGreeting" class="text-2xl font-serif font-bold text-white drop-shadow-md mt-1">Bem-vindo</h1>
+            </div>
+            
+            <a href="/profile" class="h-11 w-11 rounded-full border border-white/30 p-0.5 overflow-hidden shadow-lg hover:border-imbb-gold transition glass-panel flex items-center justify-center">
+                <img id="headerProfileImg" src="" class="w-full h-full rounded-full object-cover hidden">
+                <div id="headerInitials" class="text-white font-serif font-bold text-lg">?</div>
+            </a>
+        </header>
+
+        <main class="flex-1 overflow-y-auto no-scrollbar p-4 pb-28 relative z-0">
+            {{{body}}}
+        </main>
+
+        <nav id="bottomNav" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50 hidden">
+            
+            <div class="absolute inset-0 bg-[#0F265C]/80 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl shadow-black/50"></div>
+            
+            <div class="relative flex justify-around items-center h-20 w-full px-2">
+                
+                <a href="/" class="group relative w-16 h-full flex flex-col items-center justify-center">
+                    <div class="transition-all duration-300 transform group-hover:-translate-y-2 group-hover:scale-110 text-white/60 group-hover:text-white">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
+                    </div>
+                    <span class="absolute bottom-3 text-[9px] font-bold text-white opacity-0 transform translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                        HOJE
+                    </span>
+                </a>
+
+                <a href="/pgm" class="group relative w-16 h-full flex flex-col items-center justify-center">
+                    <div class="transition-all duration-300 transform group-hover:-translate-y-2 group-hover:scale-110 text-white/60 group-hover:text-white">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>
+                    </div>
+                    <span class="absolute bottom-3 text-[9px] font-bold text-white opacity-0 transform translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                        PGM
+                    </span>
+                </a>
+
+                <a href="/admin" id="btnAdminNav" class="hidden group relative w-16 h-full flex flex-col items-center justify-center">
+                    <div class="transition-all duration-300 transform group-hover:-translate-y-2 group-hover:scale-110 text-white/60 group-hover:text-white">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    </div>
+                    <span class="absolute bottom-3 text-[9px] font-bold text-white opacity-0 transform translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                        ADMIN
+                    </span>
+                </a>
+
+                <a href="/profile" class="group relative w-16 h-full flex flex-col items-center justify-center">
+                    <div class="transition-all duration-300 transform group-hover:-translate-y-2 group-hover:scale-110 text-white/60 group-hover:text-white">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                    </div>
+                    <span class="absolute bottom-3 text-[9px] font-bold text-white opacity-0 transform translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                        PERFIL
+                    </span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // CONFIGURAÇÃO DO FIREBASE (Igual à sua, não mexi)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTB6wkVIfnwx009A67bv8Ar58YpD-59Z8",
+            authDomain: "vivendo-como-discipulo.firebaseapp.com",
+            projectId: "vivendo-como-discipulo",
+            storageBucket: "vivendo-como-discipulo.firebasestorage.app",
+            messagingSenderId: "1086407430526",
+            appId: "1:1086407430526:web:d57784df6283c51729a32f",
+            measurementId: "G-5JV8QRSMXQ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists()) {
+                        const d = userDoc.data();
+                        document.getElementById('userGreeting').innerText = `Olá, ${d.name.split(' ')[0]}!`;
+                        localStorage.setItem('userUid', user.uid);
+                        localStorage.setItem('userName', d.name);
+                        localStorage.setItem('userRole', d.role);
+                        
+                        if(d.photoUrl) {
+                            document.getElementById('headerProfileImg').src = d.photoUrl;
+                            document.getElementById('headerProfileImg').classList.remove('hidden');
+                            document.getElementById('headerInitials').classList.add('hidden');
+                        }
+                        if (d.role === 'admin') {
+                            const adminBtn = document.getElementById('btnAdminNav');
+                            adminBtn.classList.remove('hidden');
+                            adminBtn.classList.add('flex'); // <--- AQUI ESTAVA O SEGREDO DO ALINHAMENTO DO ADMIN
+                        }
+                    }
+                } catch (e) { console.error(e); }
+                document.getElementById('bottomNav').classList.remove('hidden');
+            } else if (!['/login', '/register'].includes(window.location.pathname)) {
+                window.location.href = '/login';
+            }
+        });
+        window.logout = () => signOut(auth).then(() => window.location.href = '/login');
+    </script>
+</body>
+</html>

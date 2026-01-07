@@ -1,0 +1,157 @@
+<div class="px-2 pb-20 animate-fade-in-down">
+    
+    <div class="glass-panel p-6 rounded-[2rem] text-white mb-6 relative overflow-hidden shadow-lg border border-white/20">
+        <div class="relative z-10">
+            <h2 class="text-3xl font-serif font-bold mb-1">Painel Pastoral</h2>
+            <p class="text-white/60 text-xs uppercase tracking-widest">Administração do Ministério</p>
+        </div>
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+    </div>
+
+    <div class="flex gap-2 mb-6 glass-panel p-1 rounded-xl">
+        <button onclick="switchTab('upload')" id="tab-upload" class="flex-1 py-3 text-xs font-bold rounded-lg bg-white/10 text-white shadow-sm transition uppercase tracking-wide">
+            📄 Upload
+        </button>
+        <button onclick="switchTab('users')" id="tab-users" class="flex-1 py-3 text-xs font-bold rounded-lg text-white/50 hover:bg-white/5 transition uppercase tracking-wide">
+            👥 Membros
+        </button>
+    </div>
+
+    <div id="content-upload" class="animate-fadeIn">
+        <div class="glass-panel p-6 rounded-[1.5rem]">
+            <h3 class="font-bold text-white mb-4 flex items-center text-sm uppercase tracking-wide">
+                <span class="bg-imbb-gold text-imbb-navy w-6 h-6 rounded flex items-center justify-center mr-3 text-xs">📥</span>
+                Publicar Boletim
+            </h3>
+            
+            <form action="/upload-pdf" method="POST" enctype="multipart/form-data" class="space-y-4" onsubmit="startLoading(this)">
+                <div class="border-2 border-dashed border-white/20 p-10 text-center rounded-2xl hover:bg-white/5 transition cursor-pointer relative group">
+                    <input type="file" id="pdfInput" name="boletim" accept=".pdf" required 
+                           class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                           onchange="updateFileName(this)">
+                    
+                    <div id="uploadPlaceholder">
+                        <div class="text-4xl mb-3 opacity-50 group-hover:scale-110 transition">📄</div>
+                        <p class="text-xs font-bold text-white/60 uppercase tracking-wide">Toque para selecionar PDF</p>
+                    </div>
+
+                    <div id="fileSelected" class="hidden">
+                        <div class="text-4xl mb-3 text-green-400">✅</div>
+                        <p class="text-sm font-bold text-white" id="fileNameDisplay">Arquivo.pdf</p>
+                    </div>
+                </div>
+
+                <button type="submit" id="btnSubmit" class="w-full bg-imbb-gold text-imbb-navy py-4 rounded-xl font-bold shadow-lg hover:brightness-110 transition uppercase text-xs tracking-wider">
+                    PROCESSAR COM IA ✨
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="content-users" class="hidden animate-fadeIn">
+        <div class="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-2">
+            <span class="bg-white/20 text-white border border-white/10 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">Todos</span>
+        </div>
+        <div id="usersList" class="space-y-3">
+            <p class="text-center text-white/30 text-xs py-10 uppercase tracking-widest">Carregando...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateFileName(input) {
+        if (input.files && input.files[0]) {
+            document.getElementById('uploadPlaceholder').classList.add('hidden');
+            document.getElementById('fileSelected').classList.remove('hidden');
+            document.getElementById('fileNameDisplay').innerText = input.files[0].name;
+        }
+    }
+
+    function startLoading(form) {
+        const btn = document.getElementById('btnSubmit');
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-pulse">LENDO PDF... AGUARDE</span>`;
+    }
+
+    function switchTab(tab) {
+        document.getElementById('content-upload').classList.add('hidden');
+        document.getElementById('content-users').classList.add('hidden');
+        
+        document.getElementById('tab-upload').className = "flex-1 py-3 text-xs font-bold rounded-lg text-white/50 hover:bg-white/5 transition uppercase tracking-wide";
+        document.getElementById('tab-users').className = "flex-1 py-3 text-xs font-bold rounded-lg text-white/50 hover:bg-white/5 transition uppercase tracking-wide";
+
+        document.getElementById('content-' + tab).classList.remove('hidden');
+        document.getElementById('tab-' + tab).className = "flex-1 py-3 text-xs font-bold rounded-lg bg-white/10 text-white shadow-sm text-white transition uppercase tracking-wide";
+
+        if(tab === 'users') loadUsers();
+    }
+
+    async function loadUsers() {
+        const uid = localStorage.getItem('userUid');
+        try {
+            const res = await fetch('/api/admin/users', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ uid })
+            });
+            const users = await res.json();
+            
+            if(users.error) {
+                document.getElementById('usersList').innerHTML = `<p class="text-red-400 text-center text-xs">${users.error}</p>`;
+                return;
+            }
+
+            const list = document.getElementById('usersList');
+            list.innerHTML = '';
+
+            users.forEach(u => {
+                let roleBadge = u.role === 'admin' ? '<span class="bg-purple-500/20 text-purple-200 border border-purple-500/30 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Pastor</span>' : 
+                               (u.role === 'lider' ? '<span class="bg-yellow-500/20 text-yellow-200 border border-yellow-500/30 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Líder</span>' : 
+                               '<span class="bg-white/10 text-white/50 border border-white/10 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Membro</span>');
+
+                const avatar = u.photoUrl 
+                    ? `<img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover border border-white/20">`
+                    : `<div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-xs border border-white/10">${u.name.charAt(0)}</div>`;
+
+                list.innerHTML += `
+                    <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            ${avatar}
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h4 class="font-bold text-white text-sm">${u.name}</h4>
+                                    ${roleBadge}
+                                </div>
+                                <p class="text-[10px] text-white/40 flex items-center gap-1">
+                                    <span>👤 Líder: <strong>${u.leaderName}</strong></span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="relative group">
+                            <button class="text-white/50 hover:text-white p-2">⋮</button>
+                            <div class="absolute right-0 top-full bg-imbb-navy border border-white/20 rounded-lg w-32 hidden group-hover:block z-20 shadow-xl">
+                                ${u.role !== 'lider' ? `<button onclick="changeRole('${u.uid}', 'lider')" class="block w-full text-left px-3 py-3 text-[10px] hover:bg-white/10 text-green-400 uppercase tracking-wide">Promover Líder</button>` : ''}
+                                ${u.role === 'lider' ? `<button onclick="changeRole('${u.uid}', 'membro')" class="block w-full text-left px-3 py-3 text-[10px] hover:bg-white/10 text-red-400 uppercase tracking-wide">Virar Membro</button>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    async function changeRole(targetUid, newRole) {
+        if(!confirm(`Mudar usuário para ${newRole.toUpperCase()}?`)) return;
+        const adminUid = localStorage.getItem('userUid');
+        try {
+            const res = await fetch('/api/admin/update-role', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ adminUid, targetUid, newRole })
+            });
+            const data = await res.json();
+            if(data.success) { alert("Atualizado!"); loadUsers(); }
+        } catch(e) { alert("Erro"); }
+    }
+</script>

@@ -1,0 +1,124 @@
+<div class="px-4 pb-20 animate-fade-in-down">
+    <div class="text-center mb-8">
+        <h2 class="text-2xl font-serif font-bold text-white">Meu Perfil</h2>
+        <p class="text-white/50 text-xs mt-1">Gerencie suas informações</p>
+    </div>
+
+    <div class="flex flex-col items-center mb-8 relative">
+        <div class="relative group cursor-pointer" onclick="document.getElementById('photoInput').click()">
+            <div class="absolute inset-0 bg-imbb-gold/30 rounded-full blur-xl group-hover:bg-imbb-gold/50 transition"></div>
+            
+            <div id="profileImageDisplay" class="w-28 h-28 rounded-full glass-panel border-2 border-white/20 shadow-2xl flex items-center justify-center overflow-hidden relative z-10">
+                <span id="initialsDisplay" class="text-4xl font-serif font-bold text-white/50">?</span>
+                <img id="imgPreview" src="" class="w-full h-full object-cover hidden">
+            </div>
+            
+            <div class="absolute bottom-0 right-0 bg-imbb-gold text-imbb-navy p-2.5 rounded-full border-2 border-imbb-navy shadow-lg z-20 group-hover:scale-110 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </div>
+        </div>
+        <p class="text-[10px] text-white/40 mt-3 uppercase tracking-wide">Toque para alterar</p>
+    </div>
+
+    <form id="profileForm" class="space-y-5">
+        <input type="file" id="photoInput" name="photo" accept="image/*" class="hidden" onchange="previewImage(event)">
+        <input type="hidden" id="uid" name="uid">
+
+        <div>
+            <label class="block text-[10px] font-bold text-white/60 uppercase mb-2 ml-1">Nome Completo</label>
+            <input type="text" id="name" name="name" class="w-full p-4 rounded-xl bg-black/20 border border-white/10 text-white font-semibold outline-none focus:border-imbb-gold transition">
+        </div>
+
+        <div>
+            <label class="block text-[10px] font-bold text-white/60 uppercase mb-2 ml-1">WhatsApp</label>
+            <input type="tel" id="whatsapp" name="whatsapp" class="w-full p-4 rounded-xl bg-black/20 border border-white/10 text-white outline-none focus:border-imbb-gold transition">
+        </div>
+
+        <div>
+            <label class="block text-[10px] font-bold text-white/60 uppercase mb-2 ml-1">E-mail (Login)</label>
+            <input type="email" id="email" name="email" readonly class="w-full p-4 rounded-xl bg-white/5 border border-white/5 text-white/40 cursor-not-allowed">
+        </div>
+
+        <button type="submit" class="w-full bg-imbb-gold text-imbb-navy py-4 rounded-xl font-bold shadow-lg mt-8 hover:brightness-110 transition uppercase text-xs tracking-wider">
+            Salvar Alterações
+        </button>
+    </form>
+
+    <div class="mt-10 pt-8 border-t border-white/10">
+        <button onclick="logout()" class="w-full text-red-300 font-bold text-xs py-3 border border-red-500/30 rounded-xl hover:bg-red-500/10 transition uppercase tracking-wide">
+            Sair da Conta
+        </button>
+    </div>
+</div>
+
+<script>
+    function previewImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('imgPreview');
+                img.src = e.target.result;
+                img.classList.remove('hidden');
+                document.getElementById('initialsDisplay').classList.add('hidden');
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const uid = localStorage.getItem('userUid');
+        if(!uid) { window.location.href = '/login'; return; }
+
+        document.getElementById('uid').value = uid;
+
+        const res = await fetch('/api/user-data', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ uid })
+        });
+        const user = await res.json();
+
+        document.getElementById('name').value = user.name || '';
+        document.getElementById('whatsapp').value = user.whatsapp || '';
+        document.getElementById('email').value = user.email || '';
+
+        if(user.photoUrl) {
+            const img = document.getElementById('imgPreview');
+            img.src = user.photoUrl;
+            img.classList.remove('hidden');
+            document.getElementById('initialsDisplay').classList.add('hidden');
+        } else {
+            const initials = (user.name || 'U').charAt(0).toUpperCase();
+            document.getElementById('initialsDisplay').innerText = initials;
+        }
+    });
+
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.innerText = "SALVANDO...";
+        
+        const formData = new FormData(e.target);
+
+        try {
+            const res = await fetch('/api/profile/update', {
+                method: 'POST',
+                body: formData 
+            });
+            const result = await res.json();
+
+            if(result.success) {
+                localStorage.setItem('userName', document.getElementById('name').value);
+                alert("Perfil atualizado!");
+                window.location.reload();
+            } else {
+                alert("Erro ao salvar.");
+            }
+        } catch(err) {
+            console.error(err);
+            alert("Erro técnico.");
+        } finally {
+            btn.innerText = "SALVAR ALTERAÇÕES";
+        }
+    });
+</script>

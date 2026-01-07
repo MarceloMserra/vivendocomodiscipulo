@@ -1,0 +1,22 @@
+{
+  "name": "vivendo-como-discipulo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-handlebars": "^8.0.1",
+    "firebase-admin": "^13.6.0",
+    "multer": "^2.0.2",
+    "openai": "^6.15.0",
+    "pdf-extraction": "^1.0.2"
+  }
+}

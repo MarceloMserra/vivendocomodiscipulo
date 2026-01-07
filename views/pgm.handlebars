@@ -1,0 +1,176 @@
+<div class="px-2 pb-20 animate-fade-in-down">
+    
+    <div id="pgmLoader" class="text-center py-20">
+        <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-imbb-gold mx-auto"></div>
+        <p class="text-xs text-white/50 mt-4 tracking-widest uppercase">Carregando PGM...</p>
+    </div>
+
+    <div id="noGroupPanel" class="hidden text-center py-20 px-6">
+        <div class="w-24 h-24 glass-panel rounded-full flex items-center justify-center mx-auto mb-6 text-4xl grayscale opacity-50">👋</div>
+        <h2 class="text-2xl font-serif font-bold text-white mb-2">Você ainda não tem um PGM</h2>
+        <p class="text-white/60 text-sm mb-8 leading-relaxed">Peça para seu líder adicionar este e-mail: <br><strong id="myEmailDisplay" class="text-imbb-gold border-b border-imbb-gold/30 pb-1"></strong></p>
+        <div class="glass-panel p-4 rounded-xl text-xs text-white/70 mx-auto max-w-xs border-l-4 border-imbb-blue text-left">
+            <strong>Dica:</strong> Se você é Líder, peça ao Pastor para liberar seu acesso de liderança no Admin.
+        </div>
+    </div>
+
+    <div id="groupContent" class="hidden">
+        
+        <div class="glass-panel p-6 rounded-[2rem] text-white mb-8 relative overflow-hidden shadow-glass border border-white/20">
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-3xl font-serif font-bold">Nosso PGM</h2>
+                    <span id="roleBadge" class="bg-white/10 border border-white/20 text-white text-[9px] font-bold px-3 py-1 rounded-full backdrop-blur-md uppercase tracking-wide">Membro</span>
+                </div>
+                <p class="text-white/60 text-sm font-light">Vida na vida. Crescimento em comunhão.</p>
+            </div>
+            <div class="absolute top-0 right-0 w-40 h-40 bg-imbb-gold/20 rounded-full -mr-10 -mt-10 blur-3xl"></div>
+        </div>
+
+        <div id="leaderTools" class="hidden mb-10">
+            <div class="flex items-center gap-2 mb-4 px-2">
+                <div class="w-1 h-4 bg-imbb-gold rounded-full"></div>
+                <h3 class="font-bold text-white text-sm uppercase tracking-wide">Painel do Líder</h3>
+            </div>
+            
+            <div class="glass-panel rounded-2xl overflow-hidden mb-4">
+                <button onclick="document.getElementById('postForm').classList.toggle('hidden')" class="w-full p-4 flex justify-between items-center hover:bg-white/5 transition group">
+                    <span class="font-bold text-white text-sm flex items-center gap-2">
+                        <span class="bg-imbb-gold text-imbb-navy w-6 h-6 rounded flex items-center justify-center text-xs">📢</span>
+                        Criar Novo Aviso
+                    </span>
+                    <span class="text-white/50 text-xl group-hover:text-white transition">+</span>
+                </button>
+                
+                <div id="postForm" class="hidden p-5 bg-black/20 border-t border-white/5">
+                    <form action="/pgm/post" method="POST" class="space-y-4">
+                        <input type="hidden" name="pgmId" id="formPgmId">
+                        <input type="hidden" name="authorName" id="formAuthorName">
+                        
+                        <div>
+                            <label class="text-[9px] uppercase font-bold text-white/40 ml-1">Título</label>
+                            <input type="text" name="titulo" placeholder="Ex: Estudo de hoje" required class="w-full text-sm p-3 bg-white/5 border border-white/10 rounded-lg outline-none focus:border-imbb-gold text-white transition">
+                        </div>
+                        <div>
+                            <label class="text-[9px] uppercase font-bold text-white/40 ml-1">Mensagem</label>
+                            <textarea name="texto" rows="3" placeholder="Escreva aqui..." required class="w-full text-sm p-3 bg-white/5 border border-white/10 rounded-lg outline-none focus:border-imbb-gold text-white transition"></textarea>
+                        </div>
+                        <div>
+                            <label class="text-[9px] uppercase font-bold text-white/40 ml-1">Link (Opcional)</label>
+                            <input type="url" name="link" placeholder="https://..." class="w-full text-sm p-3 bg-white/5 border border-white/10 rounded-lg outline-none focus:border-imbb-gold text-white transition">
+                        </div>
+                        <button type="submit" class="w-full bg-imbb-gold text-imbb-navy py-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg hover:brightness-110 transition">Publicar</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="glass-panel p-4 rounded-2xl">
+                <form action="/pgm/add" method="POST" class="flex gap-2 items-center">
+                    <input type="hidden" name="leaderUid" id="formLeaderUid">
+                    <input type="email" name="memberEmail" placeholder="E-mail da ovelha..." required class="flex-1 text-sm p-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-imbb-gold text-white">
+                    <button type="submit" class="bg-white/10 text-white w-11 h-11 rounded-xl hover:bg-imbb-gold hover:text-imbb-navy transition flex items-center justify-center border border-white/10">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 mb-4 px-2">
+            <div class="w-1 h-4 bg-white rounded-full"></div>
+            <h3 class="font-bold text-white text-sm uppercase tracking-wide">Mural do Grupo</h3>
+        </div>
+
+        <div id="muralList" class="space-y-4 mb-10">
+            </div>
+
+        <div class="flex items-center gap-2 mb-4 px-2 mt-8 border-t border-white/10 pt-8">
+            <div class="w-1 h-4 bg-white/50 rounded-full"></div>
+            <h3 class="font-bold text-white text-sm uppercase tracking-wide">Quem faz parte</h3>
+        </div>
+        <div id="membersList" class="grid grid-cols-4 gap-4">
+            </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const uid = localStorage.getItem('userUid');
+        const userName = localStorage.getItem('userName');
+        
+        if (!uid) { window.location.href = '/login'; return; }
+
+        const res = await fetch('/api/my-pgm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid })
+        });
+        const data = await res.json();
+
+        document.getElementById('pgmLoader').classList.add('hidden');
+
+        if (!data.pgmId) {
+            document.getElementById('noGroupPanel').classList.remove('hidden');
+        } else {
+            document.getElementById('groupContent').classList.remove('hidden');
+            
+            const badge = document.getElementById('roleBadge');
+            if (data.isLeader) {
+                badge.innerText = "LÍDER";
+                badge.className = "bg-imbb-gold text-imbb-navy text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-lg";
+                
+                document.getElementById('leaderTools').classList.remove('hidden');
+                document.getElementById('formLeaderUid').value = uid;
+                document.getElementById('formPgmId').value = data.pgmId;
+                document.getElementById('formAuthorName').value = userName || "Líder";
+            } else {
+                badge.innerText = "MEMBRO";
+            }
+
+            const mural = document.getElementById('muralList');
+            if (data.posts && data.posts.length > 0) {
+                mural.innerHTML = data.posts.map(post => `
+                    <div class="glass-panel p-5 rounded-2xl relative group">
+                        ${data.isLeader ? `
+                        <form action="/pgm/delete-post" method="POST" class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition" onsubmit="return confirm('Apagar?')">
+                            <input type="hidden" name="postId" value="${post.id}">
+                            <button class="text-white/30 hover:text-red-400">✕</button>
+                        </form>` : ''}
+                        
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="text-[9px] font-bold bg-white/10 text-white border border-white/10 px-2 py-1 rounded uppercase tracking-wide">${post.titulo}</span>
+                            <span class="text-[9px] text-white/40">• ${post.authorName}</span>
+                        </div>
+                        
+                        <p class="text-sm text-gray-200 leading-relaxed mb-3 whitespace-pre-line">${post.texto}</p>
+                        
+                        ${post.link ? `
+                        <a href="${post.link}" target="_blank" class="flex items-center gap-2 text-imbb-gold text-xs font-bold bg-black/20 border border-white/5 p-3 rounded-xl hover:bg-black/40 transition mt-2">
+                            <span>🔗 Acessar Material / Link</span>
+                        </a>` : ''}
+                    </div>
+                `).join('');
+            } else {
+                mural.innerHTML = `
+                    <div class="text-center py-8 glass-panel rounded-2xl border-dashed border-2 border-white/10">
+                        <p class="text-white/30 text-xs">Nenhum recado no mural ainda.</p>
+                    </div>
+                `;
+            }
+
+            const membersDiv = document.getElementById('membersList');
+            membersDiv.innerHTML = data.members.map(m => `
+                <div class="flex flex-col items-center relative group">
+                    <div class="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-sm font-serif font-bold text-white mb-2 border border-white/20 shadow-lg">
+                        ${m.name.charAt(0)}
+                    </div>
+                    <span class="text-[9px] text-white/60 text-center leading-tight truncate w-full">${m.name.split(' ')[0]}</span>
+                    ${data.isLeader && m.id !== uid ? `
+                    <form action="/pgm/remove" method="POST" class="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition" onsubmit="return confirm('Remover?')">
+                        <input type="hidden" name="memberId" value="${m.id}">
+                        <button class="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] shadow-md">✕</button>
+                    </form>` : ''}
+                </div>
+            `).join('');
+        }
+    });
+</script>
