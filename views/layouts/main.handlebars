@@ -2,10 +2,21 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Discípulo">
+    <meta name="theme-color" content="#0F265C">
+
+    <link rel="apple-touch-icon" href="/img/icon-192.png">
+    <link rel="manifest" href="/manifest.json">
+
     <title>Vivendo como Discípulo</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,700;1,400&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
     <script>
         tailwind.config = {
             theme: {
@@ -29,7 +40,16 @@
             }
         }
     </script>
+    
     <style>
+        /* AJUSTE PARA IPHONE (SAFE AREA) */
+        /* Isso impede que o conteúdo fique atrás do notch (câmera) ou da barra home */
+        body {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            min-height: 100vh; /* Garante altura total */
+        }
+
         /* Fundo com Imagem Fixa */
         .app-bg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2;
@@ -37,16 +57,15 @@
             background-size: cover;
         }
         
-        /* Máscara Escura (Ajustada para ser mais transparente e preta) */
+        /* Máscara Escura */
         .app-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            /* Gradiente Preto para Azul muito sutil */
             background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(15, 38, 92, 0.6));
         }
 
-        /* CARD DE VIDRO (Glassmorphism Moderno) */
+        /* CARD DE VIDRO */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.1); 
+            background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);           
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2); 
@@ -60,7 +79,7 @@
             transform: translateY(-2px);
         }
 
-        /* Modal de Leitura (Fundo claro para ler melhor) */
+        /* Modal de Leitura */
         .glass-reader {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
@@ -143,7 +162,7 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // CONFIGURAÇÃO DO FIREBASE (Igual à sua, não mexi)
+        // COPIE SUA CONFIG DO FIREBASE AQUI
         const firebaseConfig = {
             apiKey: "AIzaSyCTB6wkVIfnwx009A67bv8Ar58YpD-59Z8",
             authDomain: "vivendo-como-discipulo.firebaseapp.com",
@@ -177,7 +196,7 @@
                         if (d.role === 'admin') {
                             const adminBtn = document.getElementById('btnAdminNav');
                             adminBtn.classList.remove('hidden');
-                            adminBtn.classList.add('flex'); // <--- AQUI ESTAVA O SEGREDO DO ALINHAMENTO DO ADMIN
+                            adminBtn.classList.add('flex');
                         }
                     }
                 } catch (e) { console.error(e); }
