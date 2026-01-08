@@ -106,18 +106,18 @@
     <div id="readerModal" class="fixed inset-0 z-[100] hidden transition-opacity duration-300">
         <div class="absolute inset-0 bg-black/95 backdrop-blur-xl" onclick="closeReader()"></div>
         
-        <div id="readerCard" class="absolute bottom-0 left-0 w-full h-[96vh] bg-[#0A1635] rounded-t-[2.5rem] flex flex-col shadow-2xl transform translate-y-full transition-transform duration-300 border-t border-white/10">
+        <div id="readerCard" class="absolute bottom-0 left-0 w-full h-[96vh] bg-[#0A1635] rounded-t-[2.5rem] flex flex-col shadow-2xl transform translate-y-full transition-transform duration-300 border-t border-white/10 overflow-hidden">
             
-            <div class="bg-[#0A1635]/90 backdrop-blur p-4 z-10 rounded-t-[2.5rem] flex justify-between items-center border-b border-white/5 sticky top-0">
-                <div class="w-10"></div>
-                <div class="w-12 h-1 bg-white/20 rounded-full"></div>
-                <button onclick="closeReader()" class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white transition">✕</button>
+            <div class="bg-[#0F265C] p-5 shrink-0 rounded-t-[2.5rem] flex justify-between items-center border-b border-white/10 z-20 shadow-md relative">
+                <div class="w-10"></div> <div class="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1 bg-white/20 rounded-full"></div>
+                
+                <button onclick="closeReader()" class="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:bg-white/20 hover:text-white transition mt-1">✕</button>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-6 pb-32 no-scrollbar">
+            <div class="flex-1 overflow-y-auto p-6 pt-8 pb-32 no-scrollbar bg-[#0A1635]">
                 
                 <span id="modalDate" class="text-xs font-bold tracking-widest text-imbb-gold uppercase block mb-3 text-center opacity-80"></span>
-                <h2 id="modalTitle" class="text-3xl font-serif font-bold text-white leading-tight mb-6 text-center"></h2>
+                <h2 id="modalTitle" class="text-3xl font-serif font-bold text-white leading-tight mb-8 text-center px-2"></h2>
                 
                 <div class="text-center mb-10">
                     <a id="modalBibleLink" target="_blank" class="inline-flex items-center gap-2 px-5 py-3 bg-white/5 text-white text-xs font-bold rounded-full hover:bg-white/10 transition border border-white/10 shadow-lg">
@@ -135,7 +135,7 @@
                 </div>
 
                 <button id="modalCheckBtn" onclick="toggleReadModal()" class="w-full py-4 rounded-xl border border-white/20 text-white/50 font-bold mb-10 flex items-center justify-center gap-3 hover:bg-white/5 transition group">
-                    <span class="check-icon text-2xl group-hover:scale-110 transition">○</span> Marcar Leitura
+                    <span class="check-icon text-2xl group-hover:scale-110 transition">○</span> Marcar como Lido
                 </button>
 
                 <div class="bg-[#0F1E45] p-6 rounded-3xl shadow-lg border border-white/5">
@@ -154,7 +154,7 @@
                         <input type="hidden" name="userPgm" class="input-user-pgm">
                         <input type="hidden" name="nome" class="input-user-name">
                         
-                        <input name="texto" placeholder="Escreva sua reflexão..." required class="flex-1 bg-black/30 rounded-full px-5 py-4 text-sm text-white placeholder-white/30 outline-none border border-white/10 focus:border-imbb-gold transition shadow-inner">
+                        <input name="texto" placeholder="Compartilhe sua reflexão..." required class="flex-1 bg-black/30 rounded-full px-5 py-4 text-sm text-white placeholder-white/30 outline-none border border-white/10 focus:border-imbb-gold transition shadow-inner">
                         
                         <button type="submit" class="absolute right-2 top-2 bg-imbb-gold text-imbb-navy w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition font-bold text-lg">➤</button>
                     </form>
@@ -212,14 +212,13 @@
         const modal = document.getElementById('readerModal');
         const card = document.getElementById('readerCard');
         
-        // TRAVA O SCROLL DO CORPO DO SITE (CORREÇÃO DO BUG DE ROLAGEM)
+        // TRAVA O SCROLL DO CORPO DO SITE
         document.body.style.overflow = 'hidden';
 
         document.getElementById('modalDate').innerText = data.cabecalho_dia || data.dia_semana;
         document.getElementById('modalTitle').innerText = data.titulo;
         document.getElementById('modalText').innerHTML = data.conteudo.replace(/\n/g, '<br><br>');
         
-        // Pergunta
         const questionBox = document.getElementById('modalQuestion');
         if(data.pergunta_reflexao) {
             questionBox.innerText = data.pergunta_reflexao;
@@ -228,12 +227,10 @@
             questionBox.classList.add('hidden');
         }
 
-        // Link Bíblia
         const verseLink = document.getElementById('modalBibleLink');
         verseLink.href = `https://www.bibliaonline.com.br/nvi/busca?q=${encodeURIComponent(data.texto_base)}`;
         verseLink.innerHTML = `📖 Ler ${data.texto_base}`;
 
-        // Leitura Anual (Botões Dark)
         const annualBox = document.getElementById('modalAnnualBox');
         const annualLinks = document.getElementById('modalAnnualLinks');
         if (data.leitura_anual) {
@@ -252,7 +249,6 @@
             annualBox.classList.add('hidden');
         }
 
-        // Comentários (Estilo Dark)
         const commentsDiv = document.getElementById('modalCommentsList');
         commentsDiv.innerHTML = '';
         if (data.comentarios && data.comentarios.length > 0) {
