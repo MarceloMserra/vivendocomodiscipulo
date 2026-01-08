@@ -44,8 +44,7 @@
     </div>
     {{/if}}
 
-    <div class="space-y-4 px-2 pb-10">
-        <div class="flex items-center gap-2 mb-1">
+    <div class="space-y-4 px-2 pb-24"> <div class="flex items-center gap-2 mb-1">
             <div class="w-1 h-4 bg-imbb-gold rounded-full"></div>
             <h3 class="font-bold text-white text-sm uppercase tracking-wide">Devocionais Diários</h3>
         </div>
@@ -76,7 +75,7 @@
     </div>
 
     {{#if data.extras}}
-    <div class="mt-6 pb-28 px-2">
+    <div class="mt-6 pb-32 px-2">
         <div class="flex items-center gap-2 mb-3">
             <div class="w-1 h-4 bg-purple-400 rounded-full"></div>
             <h3 class="font-bold text-white text-sm uppercase tracking-wide">Materiais de Apoio</h3>
@@ -103,21 +102,25 @@
     </div>
     {{/if}}
 
-    <div id="readerModal" class="fixed inset-0 z-[100] hidden transition-opacity duration-300">
+    <div id="readerModal" class="fixed inset-0 z-[9999] hidden transition-opacity duration-300">
+        
         <div class="absolute inset-0 bg-black/95 backdrop-blur-xl" onclick="closeReader()"></div>
         
-        <div id="readerCard" class="absolute bottom-0 left-0 w-full h-[96vh] bg-[#0A1635] rounded-t-[2.5rem] shadow-2xl transform translate-y-full transition-transform duration-300 border-t border-white/10 overflow-hidden flex flex-col">
+        <div id="readerCard" class="absolute bottom-0 left-0 md:left-1/2 md:-translate-x-1/2 w-full md:max-w-md h-[92dvh] bg-[#0A1635] rounded-t-[2rem] shadow-2xl transform translate-y-full transition-transform duration-300 border-t border-white/10 flex flex-col">
             
-            <div class="bg-[#0F265C] p-5 shrink-0 flex justify-between items-center border-b border-white/10 z-50 shadow-md relative">
-                <div class="w-10"></div> 
-                <div class="w-12 h-1 bg-white/20 rounded-full absolute left-1/2 -translate-x-1/2 top-4"></div>
-                <button onclick="closeReader()" class="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:bg-white/20 hover:text-white transition mt-1">✕</button>
+            <div class="bg-[#0F265C] w-full shrink-0 flex justify-between items-center px-6 py-4 rounded-t-[2rem] border-b border-white/10 shadow-lg relative z-50">
+                
+                <div class="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-white/20 rounded-full"></div>
+                
+                <div class="w-10"></div> <button onclick="closeReader()" class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-red-500/20 hover:text-red-400 transition mt-2">
+                    <span class="text-xl font-bold">✕</span>
+                </button>
             </div>
 
-            <div class="flex-1 overflow-y-auto bg-[#0A1635] p-6 pb-32 no-scrollbar">
+            <div class="flex-1 overflow-y-auto bg-[#0A1635] p-6 pb-20 no-scrollbar relative">
                 
                 <span id="modalDate" class="text-xs font-bold tracking-widest text-imbb-gold uppercase block mb-3 text-center opacity-80 mt-2"></span>
-                <h2 id="modalTitle" class="text-2xl font-serif font-bold text-white leading-tight mb-8 text-center px-1"></h2>
+                <h2 id="modalTitle" class="text-2xl font-serif font-bold text-white leading-tight mb-8 text-center"></h2>
                 
                 <div class="text-center mb-10">
                     <a id="modalBibleLink" target="_blank" class="inline-flex items-center gap-2 px-5 py-3 bg-white/5 text-white text-xs font-bold rounded-full hover:bg-white/10 transition border border-white/10 shadow-lg">
@@ -138,7 +141,7 @@
                     <span class="check-icon text-2xl group-hover:scale-110 transition">○</span> Marcar como Lido
                 </button>
 
-                <div class="bg-[#0F1E45] p-6 rounded-3xl shadow-lg border border-white/5">
+                <div class="bg-[#0F1E45] p-6 rounded-3xl shadow-lg border border-white/5 mb-10">
                     <h3 class="font-bold text-white mb-4 flex items-center gap-2 text-sm uppercase tracking-wide">
                         <span class="text-imbb-gold">💬</span> Espaço de Comunhão
                     </h3>
@@ -207,7 +210,8 @@
         const modal = document.getElementById('readerModal');
         const card = document.getElementById('readerCard');
         
-        document.body.style.overflow = 'hidden'; // Trava scroll da página
+        // TRAVA SCROLL DO CORPO
+        document.body.style.overflow = 'hidden';
 
         document.getElementById('modalDate').innerText = data.cabecalho_dia || data.dia_semana;
         document.getElementById('modalTitle').innerText = data.titulo;
@@ -251,7 +255,7 @@
     function closeReader() {
         const modal = document.getElementById('readerModal');
         const card = document.getElementById('readerCard');
-        document.body.style.overflow = ''; // Destrava scroll
+        document.body.style.overflow = ''; // DESTRAVA SCROLL
         card.classList.add('translate-y-full');
         setTimeout(() => modal.classList.add('hidden'), 300);
     }
