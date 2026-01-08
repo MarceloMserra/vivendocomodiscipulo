@@ -1,7 +1,7 @@
 {{#if data}}
     
     <div class="mb-8 px-2 animate-fade-in-down">
-        <div class="glass-panel p-4 rounded-2xl flex justify-between items-center text-white">
+        <div class="glass-panel p-4 rounded-2xl shadow-lg border border-white/10 flex justify-between items-center text-white">
             <div>
                 <span class="text-[10px] uppercase tracking-wider text-imbb-gold font-bold">Você está lendo</span>
                 <p class="text-lg font-serif font-bold">{{data.semana}}</p>
@@ -23,7 +23,7 @@
              onmouseover="pauseCarousel()" onmouseout="resumeCarousel()">
             
             {{#each data.noticias}}
-            <div class="min-w-[280px] max-w-[280px] glass-panel p-5 rounded-3xl snap-center flex flex-col justify-between relative group hover:bg-white/10 transition duration-500">
+            <div class="min-w-[280px] max-w-[280px] glass-panel p-5 rounded-3xl snap-center flex flex-col justify-between relative group hover:bg-white/10 transition duration-500 border border-white/10">
                 <div>
                     <span class="bg-imbb-gold text-imbb-navy text-[9px] font-bold px-2 py-1 rounded-md uppercase tracking-wider mb-3 inline-block shadow-sm">{{this.data}}</span>
                     <h4 class="font-serif font-bold text-white text-lg leading-tight mb-2 line-clamp-2">{{this.titulo}}</h4>
@@ -52,7 +52,7 @@
 
         {{#each data.devocionais}}
         <div onclick='openReader({{@index}}, {{json this}})' 
-             class="glass-panel p-6 rounded-[1.5rem] cursor-pointer relative overflow-hidden group hover:bg-white/10 transition duration-300">
+             class="glass-panel p-6 rounded-[1.5rem] cursor-pointer relative overflow-hidden group hover:bg-white/10 transition duration-300 border border-white/10">
             
             <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
                 <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M11.25 4.533A9.707 9.707 0 006 3a9.735 9.735 0 00-3.25.555.75.75 0 00-.5.707v14.25a.75.75 0 001 .707A8.237 8.237 0 016 18.75c1.995 0 3.823.707 5.25 1.886V4.533zM12.75 20.636A8.214 8.214 0 0118 18.75c.966 0 1.89.166 2.75.47a.75.75 0 001-.708V4.262a.75.75 0 00-.5-.707A9.735 9.735 0 0018 3a9.707 9.707 0 00-5.25 1.533v16.103z"></path></svg>
@@ -84,7 +84,7 @@
         
         <div class="space-y-3">
             {{#each data.extras}}
-            <div class="glass-panel rounded-2xl overflow-hidden">
+            <div class="glass-panel rounded-2xl overflow-hidden border border-white/10">
                 <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.arrow').classList.toggle('rotate-180')" class="w-full p-4 flex justify-between items-center hover:bg-white/5 transition text-left">
                     <div class="flex items-center gap-3">
                         <div class="bg-purple-500/20 p-2 rounded-lg text-purple-300">
@@ -94,7 +94,7 @@
                     </div>
                     <svg class="arrow w-4 h-4 text-white/50 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
-                <div class="hidden p-5 bg-white/95 text-gray-800 text-sm leading-relaxed whitespace-pre-line font-serif">
+                <div class="hidden p-5 bg-white/5 text-gray-200 text-sm leading-relaxed whitespace-pre-line font-serif border-t border-white/10">
                     {{this.conteudo}}
                 </div>
             </div>
@@ -103,97 +103,101 @@
     </div>
     {{/if}}
 
-    <div id="readerModal" class="fixed inset-0 z-50 hidden transition-opacity duration-300">
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeReader()"></div>
+    <div id="readerModal" class="fixed inset-0 z-[100] hidden transition-opacity duration-300">
+        <div class="absolute inset-0 bg-black/95 backdrop-blur-xl" onclick="closeReader()"></div>
         
-        <div id="readerCard" class="absolute bottom-0 left-0 w-full h-[95vh] glass-light rounded-t-[2rem] flex flex-col shadow-2xl transform translate-y-full transition-transform duration-300">
+        <div id="readerCard" class="absolute bottom-0 left-0 w-full h-[96vh] bg-[#0A1635] rounded-t-[2.5rem] flex flex-col shadow-2xl transform translate-y-full transition-transform duration-300 border-t border-white/10">
             
-            <div class="bg-white/80 backdrop-blur p-4 z-10 rounded-t-[2rem] flex justify-between items-center border-b border-gray-200 sticky top-0">
+            <div class="bg-[#0A1635]/90 backdrop-blur p-4 z-10 rounded-t-[2.5rem] flex justify-between items-center border-b border-white/5 sticky top-0">
                 <div class="w-10"></div>
-                <div class="w-12 h-1.5 bg-gray-300 rounded-full"></div>
-                <button onclick="closeReader()" class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-300 transition">✕</button>
+                <div class="w-12 h-1 bg-white/20 rounded-full"></div>
+                <button onclick="closeReader()" class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white transition">✕</button>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-6 pb-32">
-                <span id="modalDate" class="text-xs font-bold tracking-widest text-imbb-gold uppercase block mb-2 text-center"></span>
-                <h2 id="modalTitle" class="text-3xl font-serif font-bold text-imbb-navy leading-tight mb-4 text-center"></h2>
+            <div class="flex-1 overflow-y-auto p-6 pb-32 no-scrollbar">
                 
-                <div class="text-center mb-8">
-                    <a id="modalBibleLink" target="_blank" class="inline-flex items-center gap-2 px-5 py-2 bg-imbb-navy text-white text-xs font-bold rounded-full hover:bg-imbb-blue transition shadow-lg">
-                        📖 Ler Texto Base
+                <span id="modalDate" class="text-xs font-bold tracking-widest text-imbb-gold uppercase block mb-3 text-center opacity-80"></span>
+                <h2 id="modalTitle" class="text-3xl font-serif font-bold text-white leading-tight mb-6 text-center"></h2>
+                
+                <div class="text-center mb-10">
+                    <a id="modalBibleLink" target="_blank" class="inline-flex items-center gap-2 px-5 py-3 bg-white/5 text-white text-xs font-bold rounded-full hover:bg-white/10 transition border border-white/10 shadow-lg">
+                        📖 Ler Texto Bíblico
                     </a>
                 </div>
 
-                <div id="modalText" class="prose prose-lg text-gray-800 leading-relaxed font-serif text-justify mb-10 first-letter:text-5xl first-letter:font-bold first-letter:text-imbb-gold first-letter:mr-2 first-letter:float-left"></div>
+                <div id="modalText" class="prose prose-invert prose-lg text-gray-300 leading-relaxed font-serif text-justify mb-12 first-letter:text-5xl first-letter:font-bold first-letter:text-imbb-gold first-letter:mr-3 first-letter:float-left"></div>
 
-                <div id="modalAnnualBox" class="mb-8 p-5 bg-green-50 rounded-2xl border border-green-200 hidden">
-                    <p class="text-[10px] uppercase font-bold text-green-800 mb-3 flex items-center">
+                <div id="modalAnnualBox" class="mb-10 p-5 bg-white/5 rounded-2xl border border-white/10 hidden">
+                    <p class="text-[10px] uppercase font-bold text-imbb-gold mb-4 flex items-center">
                         <span class="mr-2 text-lg">📅</span> Leitura Bíblica Anual
                     </p>
                     <div id="modalAnnualLinks" class="flex flex-wrap gap-2"></div>
                 </div>
 
-                <button id="modalCheckBtn" onclick="toggleReadModal()" class="w-full py-4 rounded-xl border-2 border-gray-300 text-gray-500 font-bold mb-8 flex items-center justify-center gap-2 hover:bg-white transition">
-                    <span class="check-icon text-2xl">○</span> Marcar como Lido
+                <button id="modalCheckBtn" onclick="toggleReadModal()" class="w-full py-4 rounded-xl border border-white/20 text-white/50 font-bold mb-10 flex items-center justify-center gap-3 hover:bg-white/5 transition group">
+                    <span class="check-icon text-2xl group-hover:scale-110 transition">○</span> Marcar Leitura
                 </button>
 
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
-                    <h3 class="font-bold text-imbb-navy mb-4 flex items-center gap-2"><span>💬</span> Comunhão</h3>
-                    <div id="modalQuestion" class="text-sm text-imbb-blue bg-blue-50 p-4 rounded-xl mb-6 italic font-medium border-l-4 border-imbb-blue"></div>
-                    <div id="modalCommentsList" class="space-y-4 mb-6"></div>
-                    <form action="/comentar" method="POST" class="flex gap-2">
+                <div class="bg-[#0F1E45] p-6 rounded-3xl shadow-lg border border-white/5">
+                    <h3 class="font-bold text-white mb-4 flex items-center gap-2 text-sm uppercase tracking-wide">
+                        <span class="text-imbb-gold">💬</span> Espaço de Comunhão
+                    </h3>
+                    
+                    <div id="modalQuestion" class="text-sm text-blue-200 bg-imbb-blue/20 p-5 rounded-2xl mb-6 italic font-medium border-l-4 border-imbb-blue"></div>
+
+                    <div id="modalCommentsList" class="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2"></div>
+
+                    <form action="/comentar" method="POST" class="flex gap-2 relative">
                         <input type="hidden" name="boletimId" value="{{data.uid}}">
                         <input type="hidden" name="devocionalIndex" id="modalIndexInput">
                         <input type="hidden" name="userUid" class="input-user-uid">
                         <input type="hidden" name="userPgm" class="input-user-pgm">
                         <input type="hidden" name="nome" class="input-user-name">
-                        <input name="texto" placeholder="Compartilhe sua reflexão..." required class="flex-1 bg-gray-50 rounded-full px-4 py-3 text-sm outline-none border border-gray-200 focus:border-imbb-blue transition">
-                        <button type="submit" class="bg-imbb-navy text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition">➤</button>
+                        
+                        <input name="texto" placeholder="Escreva sua reflexão..." required class="flex-1 bg-black/30 rounded-full px-5 py-4 text-sm text-white placeholder-white/30 outline-none border border-white/10 focus:border-imbb-gold transition shadow-inner">
+                        
+                        <button type="submit" class="absolute right-2 top-2 bg-imbb-gold text-imbb-navy w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition font-bold text-lg">➤</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="newsModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-        <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl relative animate-bounce-in">
-            <button onclick="document.getElementById('newsModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">✕</button>
-            <h3 id="newsModalTitle" class="text-xl font-serif font-bold text-imbb-navy mb-4 pr-6"></h3>
-            <div id="newsModalContent" class="text-gray-600 text-sm leading-relaxed max-h-[60vh] overflow-y-auto font-sans text-justify"></div>
+    <div id="newsModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-md p-6">
+        <div class="glass-panel w-full max-w-sm rounded-3xl p-8 shadow-2xl relative animate-bounce-in border border-white/10">
+            <button onclick="document.getElementById('newsModal').classList.add('hidden')" class="absolute top-4 right-4 text-white/50 hover:text-white">✕</button>
+            <h3 id="newsModalTitle" class="text-xl font-serif font-bold text-white mb-4 pr-6 leading-tight"></h3>
+            <div class="h-1 w-12 bg-imbb-gold rounded-full mb-6"></div>
+            <div id="newsModalContent" class="text-gray-300 text-sm leading-relaxed max-h-[60vh] overflow-y-auto font-sans text-justify pr-2"></div>
         </div>
     </div>
 
 {{else}}
     <div class="glass-panel p-8 rounded-3xl text-center mt-20 mx-2">
-        <h2 class="text-xl font-bold text-white">Carregando...</h2>
+        <div class="animate-pulse mb-4 text-4xl">⛪</div>
+        <h2 class="text-xl font-bold text-white">Carregando Boletim...</h2>
     </div>
 {{/if}}
 
 <script>
-    // CARROSSEL AUTOMÁTICO
+    // CARROSSEL
     let carouselInterval;
     const carousel = document.getElementById('newsCarousel');
-    
     function startCarousel() {
         if(!carousel) return;
         carouselInterval = setInterval(() => {
-            // Se chegou no fim, volta pro começo
             if (carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth) {
                 carousel.scrollTo({ left: 0, behavior: 'smooth' });
             } else {
-                // Rola a largura de um card (280px + 16px gap)
                 carousel.scrollBy({ left: 300, behavior: 'smooth' });
             }
-        }, 3500); // 3.5 segundos
+        }, 4000);
     }
-
     function pauseCarousel() { clearInterval(carouselInterval); }
     function resumeCarousel() { startCarousel(); }
-
-    // Inicia quando carregar
     document.addEventListener('DOMContentLoaded', startCarousel);
 
-    // RESTO DOS SCRIPTS (MODAL, CHECK, ETC)
+    // LÓGICA DO MODAL E LEITURA
     let currentDevocionalId = null;
 
     function openModal(title, content) {
@@ -208,18 +212,28 @@
         const modal = document.getElementById('readerModal');
         const card = document.getElementById('readerCard');
         
+        // TRAVA O SCROLL DO CORPO DO SITE (CORREÇÃO DO BUG DE ROLAGEM)
+        document.body.style.overflow = 'hidden';
+
         document.getElementById('modalDate').innerText = data.cabecalho_dia || data.dia_semana;
         document.getElementById('modalTitle').innerText = data.titulo;
         document.getElementById('modalText').innerHTML = data.conteudo.replace(/\n/g, '<br><br>');
         
+        // Pergunta
         const questionBox = document.getElementById('modalQuestion');
-        if(data.pergunta_reflexao) { questionBox.innerText = data.pergunta_reflexao; questionBox.classList.remove('hidden'); } 
-        else { questionBox.classList.add('hidden'); }
+        if(data.pergunta_reflexao) {
+            questionBox.innerText = data.pergunta_reflexao;
+            questionBox.classList.remove('hidden');
+        } else {
+            questionBox.classList.add('hidden');
+        }
 
+        // Link Bíblia
         const verseLink = document.getElementById('modalBibleLink');
         verseLink.href = `https://www.bibliaonline.com.br/nvi/busca?q=${encodeURIComponent(data.texto_base)}`;
         verseLink.innerHTML = `📖 Ler ${data.texto_base}`;
 
+        // Leitura Anual (Botões Dark)
         const annualBox = document.getElementById('modalAnnualBox');
         const annualLinks = document.getElementById('modalAnnualLinks');
         if (data.leitura_anual) {
@@ -228,21 +242,37 @@
             data.leitura_anual.split(/[,;]/).forEach(ref => {
                 const cleanRef = ref.trim().replace(/\.$/, '');
                 if(cleanRef.length > 2) {
-                    annualLinks.innerHTML += `<a href="https://www.bibliaonline.com.br/nvi/busca?q=${encodeURIComponent(cleanRef)}" target="_blank" class="px-3 py-2 bg-white text-green-700 text-xs font-bold border border-green-200 rounded-lg hover:bg-green-50">${cleanRef} ↗</a>`;
+                    annualLinks.innerHTML += `
+                        <a href="https://www.bibliaonline.com.br/nvi/busca?q=${encodeURIComponent(cleanRef)}" target="_blank" class="px-4 py-2 bg-white/10 text-white text-xs font-bold border border-white/20 rounded-lg hover:bg-imbb-gold hover:text-imbb-navy hover:border-imbb-gold transition shadow-sm flex items-center gap-2">
+                            ${cleanRef} ↗
+                        </a>`;
                 }
             });
-        } else { annualBox.classList.add('hidden'); }
+        } else {
+            annualBox.classList.add('hidden');
+        }
 
+        // Comentários (Estilo Dark)
         const commentsDiv = document.getElementById('modalCommentsList');
         commentsDiv.innerHTML = '';
         if (data.comentarios && data.comentarios.length > 0) {
             data.comentarios.forEach(c => {
-                commentsDiv.innerHTML += `<div class="text-sm bg-gray-50 p-3 rounded-xl border border-gray-100"><div class="flex justify-between"><span class="font-bold text-imbb-navy text-xs">${c.nome}</span>${canDelete(c) ? `<form action="/comentario/delete" method="POST" onsubmit="return confirm('Apagar?')"><input type="hidden" name="commentId" value="${c.id}"><button class="text-red-400">✕</button></form>` : ''}</div><p class="text-gray-600 mt-1">${c.texto}</p></div>`;
+                commentsDiv.innerHTML += `
+                    <div class="text-sm bg-black/20 p-4 rounded-xl border border-white/5">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-imbb-gold text-xs uppercase tracking-wide">${c.nome}</span>
+                            ${canDelete(c) ? `<form action="/comentario/delete" method="POST" onsubmit="return confirm('Apagar?')"><input type="hidden" name="commentId" value="${c.id}"><button class="text-white/20 hover:text-red-400 text-xs">REMOVER</button></form>` : ''}
+                        </div>
+                        <p class="text-gray-300 leading-relaxed">${c.texto}</p>
+                    </div>`;
             });
-        } else { commentsDiv.innerHTML = '<p class="text-xs text-gray-400 text-center italic">Seja o primeiro a comentar!</p>'; }
+        } else {
+            commentsDiv.innerHTML = '<p class="text-xs text-white/30 text-center italic py-4">Seja o primeiro a compartilhar uma reflexão.</p>';
+        }
 
         document.getElementById('modalIndexInput').value = index;
         updateModalCheckButton();
+
         modal.classList.remove('hidden');
         setTimeout(() => card.classList.remove('translate-y-full'), 10);
     }
@@ -250,6 +280,10 @@
     function closeReader() {
         const modal = document.getElementById('readerModal');
         const card = document.getElementById('readerCard');
+        
+        // DESTRAVA O SCROLL
+        document.body.style.overflow = '';
+
         card.classList.add('translate-y-full');
         setTimeout(() => modal.classList.add('hidden'), 300);
     }
@@ -263,24 +297,32 @@
     function updateModalCheckButton() {
         const btn = document.getElementById('modalCheckBtn');
         const isRead = localStorage.getItem(currentDevocionalId) === 'true';
+        
         if (isRead) {
-            btn.className = "w-full py-4 rounded-xl bg-green-500 text-white font-bold mb-8 flex items-center justify-center gap-2 shadow-lg";
-            btn.innerHTML = '<span>✓</span> Leitura Concluída';
+            btn.className = "w-full py-4 rounded-xl bg-green-600 text-white font-bold mb-10 flex items-center justify-center gap-3 shadow-lg shadow-green-900/50 transition border-none";
+            btn.innerHTML = '<span class="text-xl">✓</span> Leitura Concluída';
         } else {
-            btn.className = "w-full py-4 rounded-xl border-2 border-gray-300 text-gray-500 font-bold mb-8 flex items-center justify-center gap-2 hover:bg-white transition";
-            btn.innerHTML = '<span>○</span> Marcar como Lido';
+            btn.className = "w-full py-4 rounded-xl border border-white/20 text-white/50 font-bold mb-10 flex items-center justify-center gap-3 hover:bg-white/5 transition hover:text-white hover:border-white/40";
+            btn.innerHTML = '<span class="text-xl">○</span> Marcar como Lido';
         }
+        
         const idx = currentDevocionalId.split('-')[1];
         const prev = document.getElementById(`preview-check-${idx}`);
         if(prev) {
-            if(isRead) { prev.classList.add('bg-green-500', 'border-none', 'text-white'); prev.innerText='✓'; }
-            else { prev.classList.remove('bg-green-500', 'border-none', 'text-white'); prev.innerText=''; }
+            if(isRead) {
+                prev.classList.add('bg-green-500', 'border-none', 'text-white');
+                prev.innerText = '✓';
+            } else {
+                prev.classList.remove('bg-green-500', 'border-none', 'text-white');
+                prev.innerText = '';
+            }
         }
     }
 
     function toggleReadModal() {
         const isRead = localStorage.getItem(currentDevocionalId) === 'true';
-        if (isRead) localStorage.removeItem(currentDevocionalId); else localStorage.setItem(currentDevocionalId, 'true');
+        if (isRead) localStorage.removeItem(currentDevocionalId);
+        else localStorage.setItem(currentDevocionalId, 'true');
         updateModalCheckButton();
     }
 
@@ -289,9 +331,13 @@
         const name = localStorage.getItem('userName');
         document.querySelectorAll('.input-user-uid').forEach(el => el.value = uid);
         document.querySelectorAll('.input-user-name').forEach(el => el.value = name);
+        
         document.querySelectorAll('.btn-check-preview').forEach(el => {
             const idx = el.id.split('-')[2];
-            if(localStorage.getItem(`card-${idx}`) === 'true') { el.classList.add('bg-green-500', 'border-none', 'text-white'); el.innerText='✓'; }
+            if(localStorage.getItem(`card-${idx}`) === 'true') {
+                el.classList.add('bg-green-500', 'border-none', 'text-white');
+                el.innerText = '✓';
+            }
         });
     });
 </script>
