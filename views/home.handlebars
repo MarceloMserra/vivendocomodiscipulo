@@ -106,18 +106,18 @@
     <div id="readerModal" class="fixed inset-0 z-[100] hidden transition-opacity duration-300">
         <div class="absolute inset-0 bg-black/95 backdrop-blur-xl" onclick="closeReader()"></div>
         
-        <div id="readerCard" class="absolute bottom-0 left-0 w-full h-[96vh] bg-[#0A1635] rounded-t-[2.5rem] flex flex-col shadow-2xl transform translate-y-full transition-transform duration-300 border-t border-white/10 overflow-hidden">
+        <div id="readerCard" class="absolute bottom-0 left-0 w-full h-[96vh] bg-[#0A1635] rounded-t-[2.5rem] shadow-2xl transform translate-y-full transition-transform duration-300 border-t border-white/10 overflow-hidden flex flex-col">
             
-            <div class="bg-[#0F265C] p-5 shrink-0 rounded-t-[2.5rem] flex justify-between items-center border-b border-white/10 z-20 shadow-md relative">
-                <div class="w-10"></div> <div class="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1 bg-white/20 rounded-full"></div>
-                
+            <div class="bg-[#0F265C] p-5 shrink-0 flex justify-between items-center border-b border-white/10 z-50 shadow-md relative">
+                <div class="w-10"></div> 
+                <div class="w-12 h-1 bg-white/20 rounded-full absolute left-1/2 -translate-x-1/2 top-4"></div>
                 <button onclick="closeReader()" class="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:bg-white/20 hover:text-white transition mt-1">✕</button>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-6 pt-8 pb-32 no-scrollbar bg-[#0A1635]">
+            <div class="flex-1 overflow-y-auto bg-[#0A1635] p-6 pb-32 no-scrollbar">
                 
-                <span id="modalDate" class="text-xs font-bold tracking-widest text-imbb-gold uppercase block mb-3 text-center opacity-80"></span>
-                <h2 id="modalTitle" class="text-3xl font-serif font-bold text-white leading-tight mb-8 text-center px-2"></h2>
+                <span id="modalDate" class="text-xs font-bold tracking-widest text-imbb-gold uppercase block mb-3 text-center opacity-80 mt-2"></span>
+                <h2 id="modalTitle" class="text-2xl font-serif font-bold text-white leading-tight mb-8 text-center px-1"></h2>
                 
                 <div class="text-center mb-10">
                     <a id="modalBibleLink" target="_blank" class="inline-flex items-center gap-2 px-5 py-3 bg-white/5 text-white text-xs font-bold rounded-full hover:bg-white/10 transition border border-white/10 shadow-lg">
@@ -142,20 +142,15 @@
                     <h3 class="font-bold text-white mb-4 flex items-center gap-2 text-sm uppercase tracking-wide">
                         <span class="text-imbb-gold">💬</span> Espaço de Comunhão
                     </h3>
-                    
                     <div id="modalQuestion" class="text-sm text-blue-200 bg-imbb-blue/20 p-5 rounded-2xl mb-6 italic font-medium border-l-4 border-imbb-blue"></div>
-
                     <div id="modalCommentsList" class="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2"></div>
-
                     <form action="/comentar" method="POST" class="flex gap-2 relative">
                         <input type="hidden" name="boletimId" value="{{data.uid}}">
                         <input type="hidden" name="devocionalIndex" id="modalIndexInput">
                         <input type="hidden" name="userUid" class="input-user-uid">
                         <input type="hidden" name="userPgm" class="input-user-pgm">
                         <input type="hidden" name="nome" class="input-user-name">
-                        
                         <input name="texto" placeholder="Compartilhe sua reflexão..." required class="flex-1 bg-black/30 rounded-full px-5 py-4 text-sm text-white placeholder-white/30 outline-none border border-white/10 focus:border-imbb-gold transition shadow-inner">
-                        
                         <button type="submit" class="absolute right-2 top-2 bg-imbb-gold text-imbb-navy w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition font-bold text-lg">➤</button>
                     </form>
                 </div>
@@ -197,7 +192,7 @@
     function resumeCarousel() { startCarousel(); }
     document.addEventListener('DOMContentLoaded', startCarousel);
 
-    // LÓGICA DO MODAL E LEITURA
+    // LÓGICA DO MODAL
     let currentDevocionalId = null;
 
     function openModal(title, content) {
@@ -212,20 +207,15 @@
         const modal = document.getElementById('readerModal');
         const card = document.getElementById('readerCard');
         
-        // TRAVA O SCROLL DO CORPO DO SITE
-        document.body.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden'; // Trava scroll da página
 
         document.getElementById('modalDate').innerText = data.cabecalho_dia || data.dia_semana;
         document.getElementById('modalTitle').innerText = data.titulo;
         document.getElementById('modalText').innerHTML = data.conteudo.replace(/\n/g, '<br><br>');
         
         const questionBox = document.getElementById('modalQuestion');
-        if(data.pergunta_reflexao) {
-            questionBox.innerText = data.pergunta_reflexao;
-            questionBox.classList.remove('hidden');
-        } else {
-            questionBox.classList.add('hidden');
-        }
+        if(data.pergunta_reflexao) { questionBox.innerText = data.pergunta_reflexao; questionBox.classList.remove('hidden'); }
+        else { questionBox.classList.add('hidden'); }
 
         const verseLink = document.getElementById('modalBibleLink');
         verseLink.href = `https://www.bibliaonline.com.br/nvi/busca?q=${encodeURIComponent(data.texto_base)}`;
@@ -239,36 +229,21 @@
             data.leitura_anual.split(/[,;]/).forEach(ref => {
                 const cleanRef = ref.trim().replace(/\.$/, '');
                 if(cleanRef.length > 2) {
-                    annualLinks.innerHTML += `
-                        <a href="https://www.bibliaonline.com.br/nvi/busca?q=${encodeURIComponent(cleanRef)}" target="_blank" class="px-4 py-2 bg-white/10 text-white text-xs font-bold border border-white/20 rounded-lg hover:bg-imbb-gold hover:text-imbb-navy hover:border-imbb-gold transition shadow-sm flex items-center gap-2">
-                            ${cleanRef} ↗
-                        </a>`;
+                    annualLinks.innerHTML += `<a href="https://www.bibliaonline.com.br/nvi/busca?q=${encodeURIComponent(cleanRef)}" target="_blank" class="px-4 py-2 bg-white/10 text-white text-xs font-bold border border-white/20 rounded-lg hover:bg-imbb-gold hover:text-imbb-navy hover:border-imbb-gold transition shadow-sm flex items-center gap-2">${cleanRef} ↗</a>`;
                 }
             });
-        } else {
-            annualBox.classList.add('hidden');
-        }
+        } else { annualBox.classList.add('hidden'); }
 
         const commentsDiv = document.getElementById('modalCommentsList');
         commentsDiv.innerHTML = '';
         if (data.comentarios && data.comentarios.length > 0) {
             data.comentarios.forEach(c => {
-                commentsDiv.innerHTML += `
-                    <div class="text-sm bg-black/20 p-4 rounded-xl border border-white/5">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="font-bold text-imbb-gold text-xs uppercase tracking-wide">${c.nome}</span>
-                            ${canDelete(c) ? `<form action="/comentario/delete" method="POST" onsubmit="return confirm('Apagar?')"><input type="hidden" name="commentId" value="${c.id}"><button class="text-white/20 hover:text-red-400 text-xs">REMOVER</button></form>` : ''}
-                        </div>
-                        <p class="text-gray-300 leading-relaxed">${c.texto}</p>
-                    </div>`;
+                commentsDiv.innerHTML += `<div class="text-sm bg-black/20 p-4 rounded-xl border border-white/5"><div class="flex justify-between items-center mb-1"><span class="font-bold text-imbb-gold text-xs uppercase tracking-wide">${c.nome}</span>${canDelete(c) ? `<form action="/comentario/delete" method="POST" onsubmit="return confirm('Apagar?')"><input type="hidden" name="commentId" value="${c.id}"><button class="text-white/20 hover:text-red-400 text-xs">REMOVER</button></form>` : ''}</div><p class="text-gray-300 leading-relaxed">${c.texto}</p></div>`;
             });
-        } else {
-            commentsDiv.innerHTML = '<p class="text-xs text-white/30 text-center italic py-4">Seja o primeiro a compartilhar uma reflexão.</p>';
-        }
+        } else { commentsDiv.innerHTML = '<p class="text-xs text-white/30 text-center italic py-4">Seja o primeiro a compartilhar uma reflexão.</p>'; }
 
         document.getElementById('modalIndexInput').value = index;
         updateModalCheckButton();
-
         modal.classList.remove('hidden');
         setTimeout(() => card.classList.remove('translate-y-full'), 10);
     }
@@ -276,10 +251,7 @@
     function closeReader() {
         const modal = document.getElementById('readerModal');
         const card = document.getElementById('readerCard');
-        
-        // DESTRAVA O SCROLL
-        document.body.style.overflow = '';
-
+        document.body.style.overflow = ''; // Destrava scroll
         card.classList.add('translate-y-full');
         setTimeout(() => modal.classList.add('hidden'), 300);
     }
@@ -293,32 +265,24 @@
     function updateModalCheckButton() {
         const btn = document.getElementById('modalCheckBtn');
         const isRead = localStorage.getItem(currentDevocionalId) === 'true';
-        
         if (isRead) {
-            btn.className = "w-full py-4 rounded-xl bg-green-600 text-white font-bold mb-10 flex items-center justify-center gap-3 shadow-lg shadow-green-900/50 transition border-none";
+            btn.className = "w-full py-4 rounded-xl bg-green-600 text-white font-bold mb-10 flex items-center justify-center gap-3 shadow-lg transition border-none";
             btn.innerHTML = '<span class="text-xl">✓</span> Leitura Concluída';
         } else {
-            btn.className = "w-full py-4 rounded-xl border border-white/20 text-white/50 font-bold mb-10 flex items-center justify-center gap-3 hover:bg-white/5 transition hover:text-white hover:border-white/40";
+            btn.className = "w-full py-4 rounded-xl border border-white/20 text-white/50 font-bold mb-10 flex items-center justify-center gap-3 hover:bg-white/5 transition";
             btn.innerHTML = '<span class="text-xl">○</span> Marcar como Lido';
         }
-        
         const idx = currentDevocionalId.split('-')[1];
         const prev = document.getElementById(`preview-check-${idx}`);
         if(prev) {
-            if(isRead) {
-                prev.classList.add('bg-green-500', 'border-none', 'text-white');
-                prev.innerText = '✓';
-            } else {
-                prev.classList.remove('bg-green-500', 'border-none', 'text-white');
-                prev.innerText = '';
-            }
+            if(isRead) { prev.classList.add('bg-green-500', 'border-none', 'text-white'); prev.innerText = '✓'; }
+            else { prev.classList.remove('bg-green-500', 'border-none', 'text-white'); prev.innerText = ''; }
         }
     }
 
     function toggleReadModal() {
         const isRead = localStorage.getItem(currentDevocionalId) === 'true';
-        if (isRead) localStorage.removeItem(currentDevocionalId);
-        else localStorage.setItem(currentDevocionalId, 'true');
+        if (isRead) localStorage.removeItem(currentDevocionalId); else localStorage.setItem(currentDevocionalId, 'true');
         updateModalCheckButton();
     }
 
@@ -327,13 +291,9 @@
         const name = localStorage.getItem('userName');
         document.querySelectorAll('.input-user-uid').forEach(el => el.value = uid);
         document.querySelectorAll('.input-user-name').forEach(el => el.value = name);
-        
         document.querySelectorAll('.btn-check-preview').forEach(el => {
             const idx = el.id.split('-')[2];
-            if(localStorage.getItem(`card-${idx}`) === 'true') {
-                el.classList.add('bg-green-500', 'border-none', 'text-white');
-                el.innerText = '✓';
-            }
+            if(localStorage.getItem(`card-${idx}`) === 'true') { el.classList.add('bg-green-500', 'border-none', 'text-white'); el.innerText = '✓'; }
         });
     });
 </script>
