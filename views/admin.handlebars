@@ -113,55 +113,106 @@
             list.innerHTML = '';
 
             users.forEach(u => {
-                let roleBadge = u.role === 'admin' ? '<span class="bg-purple-500/20 text-purple-200 border border-purple-500/30 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Pastor</span>' :
-                    (u.role === 'supervisor' ? '<span class="bg-blue-500/20 text-blue-200 border border-blue-500/30 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Supervisor</span>' :
-                        (u.role === 'lider' ? '<span class="bg-yellow-500/20 text-yellow-200 border border-yellow-500/30 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Líder</span>' :
-                            '<span class="bg-white/10 text-white/50 border border-white/10 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Membro</span>'));
+                let badgeColor = 'bg-white/10 text-white/50 border-white/10';
+                let roleLabel = 'MEMBRO';
+
+                if (u.role === 'admin') { badgeColor = 'bg-purple-500/20 text-purple-200 border-purple-500/30'; roleLabel = 'PASTOR'; }
+                else if (u.role === 'supervisor') { badgeColor = 'bg-blue-500/20 text-blue-200 border-blue-500/30'; roleLabel = 'SUPERVISOR'; }
+                else if (u.role === 'lider') { badgeColor = 'bg-yellow-500/20 text-yellow-200 border-yellow-500/30'; roleLabel = 'LÍDER'; }
+
+                const roleBadge = `<button onclick="openRoleModal('${u.uid}', '${u.name}', '${u.role}')" class="${badgeColor} border text-[9px] font-bold px-2 py-0.5 rounded uppercase hover:scale-105 transition cursor-pointer shadow-sm ml-2">${roleLabel}</button>`;
 
                 const avatar = u.photoUrl
                     ? `<img src="${u.photoUrl}" class="w-10 h-10 rounded-full object-cover border border-white/20">`
                     : `<div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-xs border border-white/10">${u.name.charAt(0)}</div>`;
 
                 list.innerHTML += `
-                    <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
+                    <div class="glass-panel p-4 rounded-xl flex items-center justify-between group hover:bg-white/5 transition">
                         <div class="flex items-center gap-3">
                             ${avatar}
                             <div>
-                                <div class="flex items-center gap-2 mb-1">
+                                <div class="flex items-center mb-1">
                                     <h4 class="font-bold text-white text-sm">${u.name}</h4>
                                     ${roleBadge}
                                 </div>
                                 <p class="text-[10px] text-white/40 flex items-center gap-1">
-                                    <span>👤 Líder: <strong>${u.leaderName}</strong></span>
+                                    ${u.leaderName ? `<span>👤 Líder: <strong>${u.leaderName}</strong></span>` : '<span>Sem Líder</span>'}
                                 </p>
                             </div>
                         </div>
-                        
-                        <div class="relative group">
-                            <button class="text-white/50 hover:text-white p-2">⋮</button>
-                            <div class="absolute right-0 top-full bg-imbb-navy border border-white/20 rounded-lg w-32 hidden group-hover:block z-20 shadow-xl">
-                                ${u.role !== 'lider' ? `<button onclick="changeRole('${u.uid}', 'lider')" class="block w-full text-left px-3 py-3 text-[10px] hover:bg-white/10 text-green-400 uppercase tracking-wide">Promover Líder</button>` : ''}
-                                ${u.role !== 'supervisor' ? `<button onclick="changeRole('${u.uid}', 'supervisor')" class="block w-full text-left px-3 py-3 text-[10px] hover:bg-white/10 text-blue-300 uppercase tracking-wide">Promover Supervisor</button>` : ''}
-                                ${u.role !== 'membro' && u.role !== 'admin' ? `<button onclick="changeRole('${u.uid}', 'membro')" class="block w-full text-left px-3 py-3 text-[10px] hover:bg-white/10 text-red-400 uppercase tracking-wide">Virar Membro</button>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
+                    </div>`;
             });
         } catch (e) { console.error(e); }
     }
 
-    async function changeRole(targetUid, newRole) {
-        if (!confirm(`Mudar usuário para ${newRole.toUpperCase()}?`)) return;
+    // --- MODAL LOGIC ---
+    function openRoleModal(uid, name, currentRole) {
+        document.getElementById('modalTargetName').innerText = name;
+        document.getElementById('modalTargetUid').value = uid;
+
+        document.querySelectorAll('.role-btn').forEach(btn => {
+            btn.classList.remove('ring-2', 'ring-white');
+            if (btn.dataset.role === currentRole) btn.classList.add('ring-2', 'ring-white', 'opacity-50', 'cursor-not-allowed');
+            else btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        });
+
+        document.getElementById('roleModal').classList.remove('hidden');
+    }
+
+    function closeRoleModal() {
+        document.getElementById('roleModal').classList.add('hidden');
+    }
+
+    async function selectRole(newRole) {
+        const uid = document.getElementById('modalTargetUid').value;
         const adminUid = localStorage.getItem('userUid');
+
+        if (!confirm(`Confirmar mudança para ${newRole.toUpperCase()}?`)) return;
+
         try {
             const res = await fetch('/api/admin/update-role', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminUid, targetUid, newRole })
+                body: JSON.stringify({ adminUid, targetUid: uid, newRole })
             });
             const data = await res.json();
-            if (data.success) { alert("Atualizado!"); loadUsers(); }
-        } catch (e) { alert("Erro"); }
+            if (data.success) { location.reload(); }
+            else { alert('Erro: ' + (data.error || 'Desconhecido')); }
+        } catch (e) { alert('Erro de conexão'); }
+
+        closeRoleModal();
     }
 </script>
+
+<!-- ROLE CHANGE MODAL -->
+<div id="roleModal"
+    class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn">
+    <div class="glass-panel w-full max-w-sm rounded-[2rem] p-6 relative border border-white/10 shadow-2xl">
+        <button onclick="closeRoleModal()"
+            class="absolute top-5 right-5 text-white/30 hover:text-white transition bg-white/5 rounded-full w-8 h-8 flex items-center justify-center">✕</button>
+
+        <h3 class="text-white font-serif font-bold text-xl mb-1">Alterar Cargo</h3>
+        <p class="text-xs text-white/50 mb-6">Usuário: <span id="modalTargetName"
+                class="text-white font-bold ml-1">...</span></p>
+        <input type="hidden" id="modalTargetUid">
+
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="selectRole('membro')" data-role="membro"
+                class="role-btn bg-white/5 hover:bg-white/10 text-white p-4 rounded-xl text-xs font-bold uppercase transition flex flex-col items-center gap-2 border border-white/5 group">
+                <span class="text-2xl group-hover:scale-110 transition">👤</span> Membro
+            </button>
+            <button onclick="selectRole('lider')" data-role="lider"
+                class="role-btn bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-200 p-4 rounded-xl text-xs font-bold uppercase transition flex flex-col items-center gap-2 border border-yellow-500/20 group">
+                <span class="text-2xl group-hover:scale-110 transition">👑</span> Líder
+            </button>
+            <button onclick="selectRole('supervisor')" data-role="supervisor"
+                class="role-btn bg-blue-500/10 hover:bg-blue-500/20 text-blue-200 p-4 rounded-xl text-xs font-bold uppercase transition flex flex-col items-center gap-2 border border-blue-500/20 group">
+                <span class="text-2xl group-hover:scale-110 transition">🛡️</span> Supervisor
+            </button>
+            <button onclick="selectRole('admin')" data-role="admin"
+                class="role-btn bg-purple-500/10 hover:bg-purple-500/20 text-purple-200 p-4 rounded-xl text-xs font-bold uppercase transition flex flex-col items-center gap-2 border border-purple-500/20 group">
+                <span class="text-2xl group-hover:scale-110 transition">⚡</span> Pastor
+            </button>
+        </div>
+    </div>
+</div>
