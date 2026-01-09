@@ -34,6 +34,8 @@ router.post('/pgm/delete-post', pgmController.deletePost);
 router.post('/api/pgm/request', pgmController.requestEntry);
 router.post('/api/supervisor/data', pgmController.getSupervisorData);
 router.post('/api/supervisor/assign', pgmController.assignMember);
+router.post('/api/supervisor/promote', pgmController.promoteToLeader);
+router.post('/api/supervisor/demote', pgmController.demoteLeader);
 
 // 5. API - Comments
 router.post('/comentar', homeController.postComment);
