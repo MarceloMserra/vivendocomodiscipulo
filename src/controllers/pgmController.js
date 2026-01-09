@@ -47,3 +47,53 @@ exports.addPost = async (req, res) => {
 exports.deletePost = async (req, res) => {
     try { await db.collection("pgm_posts").doc(req.body.postId).delete(); res.redirect("/pgm"); } catch (e) { res.status(500).send(e.message); }
 };
+
+// --- NOVAS FUNÇÕES SUPERVISOR/SOLICITAÇÃO ---
+
+exports.requestEntry = async (req, res) => {
+    const { uid, name, whatsapp } = req.body;
+    try {
+        const existing = await db.collection("pgm_requests").where("uid", "==", uid).get();
+        if (!existing.empty) return res.json({ success: true, message: "Já solicitado" });
+
+        await db.collection("pgm_requests").add({
+            uid, name, whatsapp,
+            status: 'pending',
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+};
+
+exports.getSupervisorData = async (req, res) => {
+    const { uid } = req.body;
+    try {
+        const userDoc = await db.collection("users").doc(uid).get();
+        if (!userDoc.exists || userDoc.data().role !== 'supervisor') return res.status(403).json({ error: "Acesso negado" });
+
+        const requests = [];
+        (await db.collection("pgm_requests").orderBy("createdAt", "desc").get()).forEach(d => requests.push({ id: d.id, ...d.data() }));
+
+        const pgms = [];
+        (await db.collection("users").where("role", "in", ["lider", "admin"]).get()).forEach(d => {
+            const u = d.data();
+            const pid = u.pgmId || `pgm_${d.id}`;
+            pgms.push({ id: pid, leaderName: u.name });
+        });
+
+        res.json({ requests, pgms });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+};
+
+exports.assignMember = async (req, res) => {
+    const { supervisorUid, requestUid, targetPgmId, requestId } = req.body;
+    try {
+        const sup = await db.collection("users").doc(supervisorUid).get();
+        if (sup.data().role !== 'supervisor') return res.status(403).json({ error: "Negado" });
+
+        await db.collection("users").doc(requestUid).update({ pgmId: targetPgmId });
+        await db.collection("pgm_requests").doc(requestId).delete();
+
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+};

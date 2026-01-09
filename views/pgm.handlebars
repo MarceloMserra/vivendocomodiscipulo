@@ -1,26 +1,58 @@
 <div class="px-2 pb-20 animate-fade-in-down">
-    
+
     <div id="pgmLoader" class="text-center py-20">
         <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-imbb-gold mx-auto"></div>
         <p class="text-xs text-white/50 mt-4 tracking-widest uppercase">Carregando PGM...</p>
     </div>
 
+    <!-- PAINEL SUPERVISOR -->
+    <div id="supervisorPanel" class="hidden mb-10">
+        <div class="flex items-center gap-2 mb-4 px-2">
+            <div class="w-1 h-4 bg-red-400 rounded-full"></div>
+            <h3 class="font-bold text-white text-sm uppercase tracking-wide">Supervisão de Grupos</h3>
+        </div>
+
+        <div class="glass-panel p-6 rounded-[2rem] border border-white/20 relative overflow-hidden mb-6">
+            <div class="flex justify-between items-center mb-6">
+                <h4 class="font-serif font-bold text-white text-lg">Solicitações Pendentes</h4>
+                <div class="bg-red-500/20 text-red-300 px-3 py-1 rounded-full text-xs font-bold" id="reqCount">0</div>
+            </div>
+            <div id="requestsList" class="space-y-4">
+                <p class="text-white/40 text-sm text-center italic">Nenhuma solicitação pendente.</p>
+            </div>
+        </div>
+    </div>
+
     <div id="noGroupPanel" class="hidden text-center py-20 px-6">
-        <div class="w-24 h-24 glass-panel rounded-full flex items-center justify-center mx-auto mb-6 text-4xl grayscale opacity-50">👋</div>
+        <div
+            class="w-24 h-24 glass-panel rounded-full flex items-center justify-center mx-auto mb-6 text-4xl grayscale opacity-50">
+            👋</div>
         <h2 class="text-2xl font-serif font-bold text-white mb-2">Você ainda não tem um PGM</h2>
-        <p class="text-white/60 text-sm mb-8 leading-relaxed">Peça para seu líder adicionar este e-mail: <br><strong id="myEmailDisplay" class="text-imbb-gold border-b border-imbb-gold/30 pb-1"></strong></p>
-        <div class="glass-panel p-4 rounded-xl text-xs text-white/70 mx-auto max-w-xs border-l-4 border-imbb-blue text-left">
-            <strong>Dica:</strong> Se você é Líder, peça ao Pastor para liberar seu acesso de liderança no Admin.
+        <p class="text-white/60 text-sm mb-8 leading-relaxed">Conecte-se com outras pessoas para crescer na fé.</p>
+
+        <button onclick="requestEntry()" id="btnRequest"
+            class="w-full bg-imbb-gold text-imbb-navy py-4 rounded-xl font-bold text-sm uppercase tracking-wider shadow-lg hover:brightness-110 transition mb-6">
+            Quero participar de um PGM
+        </button>
+        <p id="reqStatus"
+            class="hidden text-green-400 text-sm font-bold bg-green-900/30 p-4 rounded-xl border border-green-500/30">✅
+            Solicitação enviada! Aguarde nosso contato.</p>
+
+        <div
+            class="glass-panel p-4 rounded-xl text-xs text-white/70 mx-auto max-w-xs border-l-4 border-imbb-blue text-left">
+            <strong>Dica:</strong> Se você é Líder e não vê seu grupo, peça ao Pastor para liberar seu acesso.
         </div>
     </div>
 
     <div id="groupContent" class="hidden">
-        
-        <div class="glass-panel p-6 rounded-[2rem] text-white mb-8 relative overflow-hidden shadow-glass border border-white/20">
+
+        <div
+            class="glass-panel p-6 rounded-[2rem] text-white mb-8 relative overflow-hidden shadow-glass border border-white/20">
             <div class="relative z-10">
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="text-3xl font-serif font-bold">Nosso PGM</h2>
-                    <span id="roleBadge" class="bg-white/10 border border-white/20 text-white text-[9px] font-bold px-3 py-1 rounded-full backdrop-blur-md uppercase tracking-wide">Membro</span>
+                    <span id="roleBadge"
+                        class="bg-white/10 border border-white/20 text-white text-[9px] font-bold px-3 py-1 rounded-full backdrop-blur-md uppercase tracking-wide">Membro</span>
                 </div>
                 <p class="text-white/60 text-sm font-light">Vida na vida. Crescimento em comunhão.</p>
             </div>
@@ -32,34 +64,40 @@
                 <div class="w-1 h-4 bg-imbb-gold rounded-full"></div>
                 <h3 class="font-bold text-white text-sm uppercase tracking-wide">Painel do Líder</h3>
             </div>
-            
+
             <div class="glass-panel rounded-2xl overflow-hidden mb-4">
-                <button onclick="document.getElementById('postForm').classList.toggle('hidden')" class="w-full p-4 flex justify-between items-center hover:bg-white/5 transition group">
+                <button onclick="document.getElementById('postForm').classList.toggle('hidden')"
+                    class="w-full p-4 flex justify-between items-center hover:bg-white/5 transition group">
                     <span class="font-bold text-white text-sm flex items-center gap-2">
-                        <span class="bg-imbb-gold text-imbb-navy w-6 h-6 rounded flex items-center justify-center text-xs">📢</span>
+                        <span
+                            class="bg-imbb-gold text-imbb-navy w-6 h-6 rounded flex items-center justify-center text-xs">📢</span>
                         Criar Novo Aviso
                     </span>
                     <span class="text-white/50 text-xl group-hover:text-white transition">+</span>
                 </button>
-                
+
                 <div id="postForm" class="hidden p-5 bg-black/20 border-t border-white/5">
                     <form action="/pgm/post" method="POST" class="space-y-4">
                         <input type="hidden" name="pgmId" id="formPgmId">
                         <input type="hidden" name="authorName" id="formAuthorName">
-                        
+
                         <div>
                             <label class="text-[9px] uppercase font-bold text-white/40 ml-1">Título</label>
-                            <input type="text" name="titulo" placeholder="Ex: Estudo de hoje" required class="w-full text-sm p-3 bg-white/5 border border-white/10 rounded-lg outline-none focus:border-imbb-gold text-white transition">
+                            <input type="text" name="titulo" placeholder="Ex: Estudo de hoje" required
+                                class="w-full text-sm p-3 bg-white/5 border border-white/10 rounded-lg outline-none focus:border-imbb-gold text-white transition">
                         </div>
                         <div>
                             <label class="text-[9px] uppercase font-bold text-white/40 ml-1">Mensagem</label>
-                            <textarea name="texto" rows="3" placeholder="Escreva aqui..." required class="w-full text-sm p-3 bg-white/5 border border-white/10 rounded-lg outline-none focus:border-imbb-gold text-white transition"></textarea>
+                            <textarea name="texto" rows="3" placeholder="Escreva aqui..." required
+                                class="w-full text-sm p-3 bg-white/5 border border-white/10 rounded-lg outline-none focus:border-imbb-gold text-white transition"></textarea>
                         </div>
                         <div>
                             <label class="text-[9px] uppercase font-bold text-white/40 ml-1">Link (Opcional)</label>
-                            <input type="url" name="link" placeholder="https://..." class="w-full text-sm p-3 bg-white/5 border border-white/10 rounded-lg outline-none focus:border-imbb-gold text-white transition">
+                            <input type="url" name="link" placeholder="https://..."
+                                class="w-full text-sm p-3 bg-white/5 border border-white/10 rounded-lg outline-none focus:border-imbb-gold text-white transition">
                         </div>
-                        <button type="submit" class="w-full bg-imbb-gold text-imbb-navy py-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg hover:brightness-110 transition">Publicar</button>
+                        <button type="submit"
+                            class="w-full bg-imbb-gold text-imbb-navy py-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg hover:brightness-110 transition">Publicar</button>
                     </form>
                 </div>
             </div>
@@ -67,9 +105,14 @@
             <div class="glass-panel p-4 rounded-2xl">
                 <form action="/pgm/add" method="POST" class="flex gap-2 items-center">
                     <input type="hidden" name="leaderUid" id="formLeaderUid">
-                    <input type="email" name="memberEmail" placeholder="E-mail da ovelha..." required class="flex-1 text-sm p-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-imbb-gold text-white">
-                    <button type="submit" class="bg-white/10 text-white w-11 h-11 rounded-xl hover:bg-imbb-gold hover:text-imbb-navy transition flex items-center justify-center border border-white/10">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <input type="email" name="memberEmail" placeholder="E-mail da ovelha..." required
+                        class="flex-1 text-sm p-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-imbb-gold text-white">
+                    <button type="submit"
+                        class="bg-white/10 text-white w-11 h-11 rounded-xl hover:bg-imbb-gold hover:text-imbb-navy transition flex items-center justify-center border border-white/10">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
                     </button>
                 </form>
             </div>
@@ -80,15 +123,13 @@
             <h3 class="font-bold text-white text-sm uppercase tracking-wide">Mural do Grupo</h3>
         </div>
 
-        <div id="muralList" class="space-y-4 mb-10">
-            </div>
+        <div id="muralList" class="space-y-4 mb-10"></div>
 
         <div class="flex items-center gap-2 mb-4 px-2 mt-8 border-t border-white/10 pt-8">
             <div class="w-1 h-4 bg-white/50 rounded-full"></div>
             <h3 class="font-bold text-white text-sm uppercase tracking-wide">Quem faz parte</h3>
         </div>
-        <div id="membersList" class="grid grid-cols-4 gap-4">
-            </div>
+        <div id="membersList" class="grid grid-cols-4 gap-4"></div>
     </div>
 </div>
 
@@ -96,8 +137,15 @@
     document.addEventListener('DOMContentLoaded', async () => {
         const uid = localStorage.getItem('userUid');
         const userName = localStorage.getItem('userName');
-        
+        const userRole = localStorage.getItem('userRole');
+
         if (!uid) { window.location.href = '/login'; return; }
+
+        // --- LÓGICA SUPERVISOR ---
+        if (userRole === 'supervisor') {
+            document.getElementById('supervisorPanel').classList.remove('hidden');
+            loadSupervisorData(uid);
+        }
 
         const res = await fetch('/api/my-pgm', {
             method: 'POST',
@@ -112,12 +160,12 @@
             document.getElementById('noGroupPanel').classList.remove('hidden');
         } else {
             document.getElementById('groupContent').classList.remove('hidden');
-            
+
             const badge = document.getElementById('roleBadge');
             if (data.isLeader) {
                 badge.innerText = "LÍDER";
                 badge.className = "bg-imbb-gold text-imbb-navy text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-lg";
-                
+
                 document.getElementById('leaderTools').classList.remove('hidden');
                 document.getElementById('formLeaderUid').value = uid;
                 document.getElementById('formPgmId').value = data.pgmId;
@@ -173,4 +221,70 @@
             `).join('');
         }
     });
+
+    async function requestEntry() {
+        const uid = localStorage.getItem('userUid');
+        const name = localStorage.getItem('userName');
+        const btn = document.getElementById('btnRequest');
+
+        btn.innerText = "Enviando...";
+        btn.disabled = true;
+
+        const res = await fetch('/api/pgm/request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid, name, whatsapp: 'Não informado' })
+        });
+        const d = await res.json();
+        if (d.success) {
+            btn.classList.add('hidden');
+            document.getElementById('reqStatus').classList.remove('hidden');
+        } else {
+            alert('Erro ao solicitar.');
+            btn.innerText = "Tentar Novamente";
+            btn.disabled = false;
+        }
+    }
+
+    async function loadSupervisorData(uid) {
+        const res = await fetch('/api/supervisor/data', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid }) });
+        const data = await res.json();
+
+        document.getElementById('reqCount').innerText = data.requests.length;
+        const list = document.getElementById('requestsList');
+
+        if (data.requests.length > 0) {
+            list.innerHTML = data.requests.map(r => `
+                <div class="bg-black/30 p-4 rounded-xl border border-white/5 space-y-3">
+                    <div>
+                        <p class="font-bold text-white text-sm">${r.name}</p>
+                        <p class="text-[10px] text-white/50">Solicitado em: ${new Date(r.createdAt?._seconds * 1000).toLocaleDateString()}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <select id="sel-${r.id}" class="flex-1 bg-white/5 text-xs text-white p-2 rounded-lg border border-white/10 outline-none">
+                            <option value="">Escolher Grupo...</option>
+                            ${data.pgms.map(p => `<option value="${p.id}">${p.leaderName}</option>`).join('')}
+                        </select>
+                        <button onclick="assignMember('${r.id}', '${r.uid}')" class="bg-imbb-gold text-imbb-navy px-4 rounded-lg font-bold text-xs uppercase shadow hover:brightness-110">OK</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+
+    async function assignMember(requestId, requestUid) {
+        const targetPgmId = document.getElementById(`sel-\${requestId}`).value;
+        if (!targetPgmId) return alert("Escolha um grupo!");
+
+        if (!confirm("Confirmar encaminhamento?")) return;
+
+        const supervisorUid = localStorage.getItem('userUid');
+        await fetch('/api/supervisor/assign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ supervisorUid, requestUid, targetPgmId, requestId })
+        });
+
+        loadSupervisorData(supervisorUid); // Recarregar
+    }
 </script>
