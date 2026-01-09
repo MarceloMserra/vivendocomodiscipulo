@@ -21,8 +21,16 @@ exports.updateRole = async (req, res) => {
     try {
         const ad = await db.collection("users").doc(adminUid).get();
         if (ad.data().role !== 'admin') return res.status(403).json({ error: "Negado" });
+
         const up = { role: newRole };
-        if (newRole === 'lider') up.pgmId = `pgm_${targetUid}`;
+
+        if (newRole === 'lider') {
+            up.pgmId = `pgm_${targetUid}`;
+        } else if (newRole !== 'admin') {
+            // Se não for Líder nem Admin (ex: Membro ou Supervisor), remove pgmId de liderança
+            up.pgmId = admin.firestore.FieldValue.delete();
+        }
+
         await db.collection("users").doc(targetUid).update(up);
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
