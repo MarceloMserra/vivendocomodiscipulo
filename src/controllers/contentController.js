@@ -26,14 +26,14 @@ async function processWithChatGPT(textoDoPDF) {
                         { 
                           "titulo": "Título da notícia", 
                           "data": "Data (se houver)", 
-                          "conteudo": "Texto COMPLETO da notícia (Não resuma! Copie os parágrafos).",
+                          "conteudo": "Texto COMPLETO da notícia em HTML (use <p>, <strong>, <ul>, <li>).",
                           "link": "Se houver link (e-inscricao, forms, whatsapp), extraia aqui."
                         }
                       ],
                       "extras": [ 
                         { 
                             "titulo": "Título (ex: Compreendendo..., Manual de Disciplinas...)", 
-                            "conteudo": "Texto COMPLETO e fiel ao PDF desta seção." 
+                            "conteudo": "Texto COMPLETO desta seção, FORMATADO EM HTML (use <p>, <strong>, <ul>, <li>, <br>). Mantenha a estrutura visual bonita e organizada." 
                         } 
                       ],
                       "devocionais": [
@@ -42,7 +42,7 @@ async function processWithChatGPT(textoDoPDF) {
                           "titulo": "Título da reflexão",
                           "texto_base": "Versículo (Ex: Marcos 1.11)",
                           "leitura_anual": "Capture a linha 'Leitura anual' do rodapé (Ex: Êxodo 7-8...)",
-                          "conteudo": "Texto completo da reflexão",
+                          "conteudo": "Texto completo da reflexão em HTML (use <p>, <strong>, <i> para citações).",
                           "pergunta_reflexao": "Se houver uma pergunta no final, use-a. Se NÃO houver, CRIE uma pergunta profunda para aplicação pessoal."
                         }
                       ]
@@ -51,6 +51,7 @@ async function processWithChatGPT(textoDoPDF) {
                     1. Procure ativamente por "Notícias Missionárias" e inclua no array 'noticias'.
                     2. Procure por "Manual de Disciplinas" e "Compreendendo" e inclua no array 'extras'.
                     3. Não deixe passar os links.
+                    4. GERE HTML PURO PARA OS CAMPOS 'conteudo'. NÃO USE MARKDOWN.
                     TEXTO DO PDF:
                     ${textoDoPDF}`
                 }
