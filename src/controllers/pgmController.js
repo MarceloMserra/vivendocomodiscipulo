@@ -4,40 +4,50 @@ exports.getPgmPage = (req, res) => res.render("pgm");
 
 exports.getMyPgm = async (req, res) => {
     const { uid } = req.body;
-    if (!uid || !db) return res.json({ error: "Dados inválidos" });
+    console.log(`[PGM DEBUG] getMyPgm calle for uid: ${uid}`);
+    if (!uid || !db) {
+        console.log("[PGM DEBUG] Invalid data or db");
+        return res.json({ error: "Dados inválidos" });
+    }
+
     try {
+        console.log("[PGM DEBUG] Fetching user doc...");
         const userDoc = await db.collection("users").doc(uid).get();
-        if (!userDoc.exists) return res.json({ error: "Erro" });
+        if (!userDoc.exists) {
+            console.log("[PGM DEBUG] User not found");
+            return res.json({ error: "Erro" });
+        }
         const u = userDoc.data();
+        console.log(`[PGM DEBUG] User found: ${u.name}, role: ${u.role}, pgmId: ${u.pgmId}`);
 
         // If Leader, Admin OR SUPERVISOR, ensure they have their own PGM ID if not set
-        // Supervisors are also Leaders of their own group.
-
         let pgmId = u.pgmId;
         if (!pgmId && (u.role === 'lider' || u.role === 'admin' || u.role === 'supervisor')) {
             pgmId = `pgm_${uid}`;
+            console.log(`[PGM DEBUG] Assigning new pgmId: ${pgmId}`);
             await db.collection("users").doc(uid).update({ pgmId });
         }
 
-        // Supervisor can see the panel regardless of pgmId (logic above ensures they have one).
+        if (!pgmId) {
+            console.log("[PGM DEBUG] No PGM ID");
+            return res.json({ isLeader: false, pgmId: null, role: u.role });
+        }
 
-        if (!pgmId) return res.json({ isLeader: false, pgmId: null, role: u.role });
-
+        console.log(`[PGM DEBUG] Fetching members for pgmId: ${pgmId}`);
         const members = [];
         (await db.collection("users").where("pgmId", "==", pgmId).get()).forEach(d => members.push({ id: d.id, ...d.data() }));
+
+        console.log(`[PGM DEBUG] Fetching posts...`);
         const posts = [];
         (await db.collection("pgm_posts").where("pgmId", "==", pgmId).orderBy("createdAt", "desc").get()).forEach(d => posts.push({ id: d.id, ...d.data() }));
 
-        // Fetch Events
+        console.log(`[PGM DEBUG] Fetching events...`);
         const events = [];
         const now = admin.firestore.Timestamp.now();
-
-        // QUERY WITHOUT ORDERBY to avoid Missing Index Header error
         const eventsSnap = await db.collection("pgm_events").where("pgmId", "==", pgmId).get();
 
         eventsSnap.forEach(d => {
             const data = d.data();
-            // Filter future events
             if (data.date >= now) {
                 events.push({
                     id: d.id,
@@ -45,19 +55,22 @@ exports.getMyPgm = async (req, res) => {
                     formattedDate: data.date.toDate().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
                     formattedTime: data.date.toDate().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
                     weekday: data.date.toDate().toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').toUpperCase(),
-                    rawDate: data.date.toDate() // For sorting
+                    rawDate: data.date.toDate()
                 });
             }
         });
 
-        // Sort in memory
         events.sort((a, b) => a.rawDate - b.rawDate);
 
+        console.log("[PGM DEBUG] Sending response");
         return res.json({
             isLeader: (u.role === 'lider' || u.role === 'admin' || u.role === 'supervisor'),
             pgmId, members, posts, events, role: u.role
         });
-    } catch (e) { res.json({ error: e.message }); }
+    } catch (e) {
+        console.error("[PGM DEBUG] ERROR:", e);
+        res.json({ error: e.message });
+    }
 };
 
 exports.addMember = async (req, res) => {

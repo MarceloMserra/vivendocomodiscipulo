@@ -63,9 +63,10 @@ exports.getUsersPaginated = async (req, res) => {
 
         // --- 5. DATA RESOLUTION ---
         // Build map for Group Names efficiently
+        // Create map for Group Names efficiently
         const pgmMap = {};
-        // Retrieve all leaders/admins to name the groups (could be cached)
-        const leadersSnap = await db.collection("users").where("role", "in", ["lider", "admin"]).get();
+        // Retrieve all leaders/admins/supervisors to name the groups
+        const leadersSnap = await db.collection("users").where("role", "in", ["lider", "admin", "supervisor"]).get();
         leadersSnap.forEach(l => {
             const ld = l.data();
             const pid = ld.pgmId || `pgm_${l.id}`;
@@ -80,20 +81,15 @@ exports.getUsersPaginated = async (req, res) => {
 
         const users = [];
 
-        // --- PREPARE MEMBER COUNTS FOR LEADERS ---
-        // We only do this for the users we are about to return to avoid excessive reads
-        // Since limit is small (20), this is manageable.
+        // --- PREPARE MEMBER COUNTS FOR LEADERS/SUPERVISORS ---
         const leaderIds = [];
         snapshot.forEach(doc => {
             const d = doc.data();
-            if (d.role === 'lider' || d.role === 'admin') leaderIds.push(d.pgmId || `pgm_${doc.id}`);
+            if (d.role === 'lider' || d.role === 'admin' || d.role === 'supervisor') leaderIds.push(d.pgmId || `pgm_${doc.id}`);
         });
 
         const memberCounts = {};
         if (leaderIds.length > 0) {
-            // Firestore doesn't support "IN" for counts easily without multiple queries or aggregation
-            // We will run a count query for each displayed leader.
-            // Parallel execution for speed.
             await Promise.all(leaderIds.map(async (pid) => {
                 const countSnap = await db.collection("users").where("pgmId", "==", pid).count().get();
                 memberCounts[pid] = countSnap.data().count;
@@ -103,21 +99,22 @@ exports.getUsersPaginated = async (req, res) => {
         snapshot.forEach(doc => {
             const d = doc.data();
 
-            // Extra safety for leader view (if backend query limits failed effectively)
+            // Extra safety for leader view
             if (requester && requester.role === 'lider' && requester.pgmId && d.pgmId !== requester.pgmId) return;
 
             let groupName = '-';
-            // Logic: If user is in a group, show Leader's Name. 
-            // If user IS a leader, show "Líder".
+            // Logic: If user IS a leader/supervisor, show their Title. 
             if (d.role === 'lider') {
                 groupName = '👑 Líder do Grupo';
+            } else if (d.role === 'supervisor') {
+                groupName = '�️ Supervisor';
             } else if (d.pgmId) {
                 groupName = pgmMap[d.pgmId] || d.leaderName || 'Grupo Desconhecido';
             }
 
-            // Determine Member Count for this user row if they are a leader
+            // Determine Member Count for this user row if they are a leader/supervisor
             let countDisplay = 0;
-            if (d.role === 'lider' || d.role === 'admin') {
+            if (d.role === 'lider' || d.role === 'admin' || d.role === 'supervisor') {
                 const pid = d.pgmId || `pgm_${doc.id}`;
                 countDisplay = memberCounts[pid] || 0;
             }
@@ -128,9 +125,9 @@ exports.getUsersPaginated = async (req, res) => {
                 role: d.role,
                 pgmId: d.pgmId,
                 photoUrl: d.photoUrl || '',
-                leaderName: groupName, // This is what shows in the column
+                leaderName: groupName,
                 // Metadata for UI logic
-                isLeader: d.role === 'lider',
+                isLeader: (d.role === 'lider' || d.role === 'supervisor' || d.role === 'admin'),
                 memberCount: countDisplay
             });
         });
@@ -200,7 +197,7 @@ exports.updateUser = async (req, res) => {
 
 exports.getGroupsList = async (req, res) => {
     try {
-        const snapshot = await db.collection("users").where("role", "in", ["lider", "admin"]).get();
+        const snapshot = await db.collection("users").where("role", "in", ["lider", "admin", "supervisor"]).get();
         const groups = [];
         snapshot.forEach(doc => {
             const d = doc.data();

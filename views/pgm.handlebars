@@ -155,7 +155,7 @@
 
         <div id="muralList" class="space-y-4 mb-10"></div>
 
-        <div class="flex items-center gap-2 mb-4 px-2 mt-8 border-t border-white/10 pt-8">
+        <div class="flex items-center gap-2 mb-4 px-2 mt-8 border-t border-white/10 pt-8" id="membersHeaderWrapper">
             <div class="w-1 h-4 bg-white/50 rounded-full"></div>
             <h3 class="font-bold text-white text-sm uppercase tracking-wide">Quem faz parte</h3>
         </div>
@@ -166,7 +166,9 @@
 <!-- EVENT MODAL -->
 <div id="eventFormModal"
     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn">
+    <!-- ... Modal Content ... -->
     <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative border border-white/20 shadow-2xl">
+        <!-- ... -->
         <button onclick="document.getElementById('eventFormModal').classList.add('hidden')"
             class="absolute top-4 right-4 text-white/30 hover:text-white transition">✕</button>
 
@@ -210,72 +212,76 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', async () => {
-        const uid = localStorage.getItem('userUid');
-        const userName = localStorage.getItem('userName');
-        const userRole = localStorage.getItem('userRole');
+        // DEBUG ALERT
+        console.log("JS STARTED");
+        // alert("JS STARTED"); // Uncomment if console is not visible to user
+        try {
+            const uid = localStorage.getItem('userUid');
+            const userName = localStorage.getItem('userName');
+            const userRole = localStorage.getItem('userRole');
 
-        if (!uid) { window.location.href = '/login'; return; }
+            if (!uid) { window.location.href = '/login'; return; }
 
-        // --- LÓGICA SUPERVISOR ---
-        if (userRole === 'supervisor') {
-            document.getElementById('supervisorPanel').classList.remove('hidden');
-            loadSupervisorData(uid);
-        }
-
-        const res = await fetch('/api/my-pgm', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ uid })
-        });
-        const data = await res.json();
-
-        document.getElementById('pgmLoader').classList.add('hidden');
-
-        if (!data.pgmId) {
-            // If User is Supervisor, DO NOT show "No Group" panel as default state, 
-            // because they have the Supervisor Panel. Unless they really want to join one?
-            // The user requested: "Supervisors also have groups". 
-            // So if they don't have one, showing "You don't have a PGM" is actually correct, 
-            // BUT it might be cluttering the view if they are just working.
-            // Let's keep it but maybe style it differently? 
-            // Or just ensure Supervisor Panel is top priority.
-
-            // If Supervisor, we refrain from showing the big "NO PGM" screen if they are in "Work Mode"?
-            // Whatever, user said "Aparece dizendo você ainda não tem um PGM".
-            // We will let it show, but ensure Supervisor Panel is visible ABOVE it. (It already is).
-
-            document.getElementById('noGroupPanel').classList.remove('hidden');
-        } else {
-            document.getElementById('groupContent').classList.remove('hidden');
-
-            const badge = document.getElementById('roleBadge');
-            if (data.isLeader) {
-                if (userRole === 'supervisor') {
-                    badge.innerText = "SUPERVISÃO & LIDERANÇA";
-                    badge.className = "bg-red-500/20 text-red-200 border border-red-500/30 text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-lg";
-                } else {
-                    badge.innerText = "LÍDER";
-                    badge.className = "bg-imbb-gold text-imbb-navy text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-lg";
-                }
-
-                document.getElementById('leaderTools').classList.remove('hidden');
-                document.getElementById('btnAddEvent').classList.remove('hidden'); // Show Add Event button
-                document.getElementById('formLeaderUid').value = uid;
-                document.getElementById('formPgmId').value = data.pgmId;
-                document.getElementById('eventPgmId').value = data.pgmId; // For Event Modal
-                document.getElementById('formAuthorName').value = userName || "Líder";
-            } else {
-                badge.innerText = "MEMBRO";
+            // --- LÓGICA SUPERVISOR ---
+            if (userRole === 'supervisor') {
+                document.getElementById('supervisorPanel').classList.remove('hidden');
+                loadSupervisorData(uid);
             }
 
-            // --- RENDER AGENDA ---
-            const nextEventContainer = document.getElementById('nextEventContainer');
-            const eventsList = document.getElementById('eventsList');
+            const res = await fetch('/api/my-pgm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid })
+            });
+            const data = await res.json();
 
-            if (data.events && data.events.length > 0) {
-                // NEXT EVENT (First one)
-                const next = data.events[0];
-                nextEventContainer.innerHTML = `
+            document.getElementById('pgmLoader').classList.add('hidden');
+
+            if (!data.pgmId) {
+                // If User is Supervisor, DO NOT show "No Group" panel as default state, 
+                // because they have the Supervisor Panel. Unless they really want to join one?
+                // The user requested: "Supervisors also have groups". 
+                // So if they don't have one, showing "You don't have a PGM" is actually correct, 
+                // BUT it might be cluttering the view if they are just working.
+                // Let's keep it but maybe style it differently? 
+                // Or just ensure Supervisor Panel is top priority.
+
+                // If Supervisor, we refrain from showing the big "NO PGM" screen if they are in "Work Mode"?
+                // Whatever, user said "Aparece dizendo você ainda não tem um PGM".
+                // We will let it show, but ensure Supervisor Panel is visible ABOVE it. (It already is).
+
+                document.getElementById('noGroupPanel').classList.remove('hidden');
+            } else {
+                document.getElementById('groupContent').classList.remove('hidden');
+
+                const badge = document.getElementById('roleBadge');
+                if (data.isLeader) {
+                    if (userRole === 'supervisor') {
+                        badge.innerText = "SUPERVISÃO & LIDERANÇA";
+                        badge.className = "bg-red-500/20 text-red-200 border border-red-500/30 text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-lg";
+                    } else {
+                        badge.innerText = "LÍDER";
+                        badge.className = "bg-imbb-gold text-imbb-navy text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-lg";
+                    }
+
+                    document.getElementById('leaderTools').classList.remove('hidden');
+                    document.getElementById('btnAddEvent').classList.remove('hidden'); // Show Add Event button
+                    document.getElementById('formLeaderUid').value = uid;
+                    document.getElementById('formPgmId').value = data.pgmId;
+                    document.getElementById('eventPgmId').value = data.pgmId; // For Event Modal
+                    document.getElementById('formAuthorName').value = userName || "Líder";
+                } else {
+                    badge.innerText = "MEMBRO";
+                }
+
+                // --- RENDER AGENDA ---
+                const nextEventContainer = document.getElementById('nextEventContainer');
+                const eventsList = document.getElementById('eventsList');
+
+                if (data.events && data.events.length > 0) {
+                    // NEXT EVENT (First one)
+                    const next = data.events[0];
+                    nextEventContainer.innerHTML = `
                     <div class="glass-panel p-0 rounded-2xl relative overflow-hidden group border border-white/20 shadow-2xl">
                         <div class="absolute inset-0 bg-gradient-to-br from-purple-600/30 to-blue-600/30"></div>
                         <div class="relative p-6 flex flex-col items-center text-center">
@@ -299,12 +305,12 @@
                     </div>
                 `;
 
-                // OTHER EVENTS
-                if (data.events.length > 1) {
-                    eventsList.classList.remove('hidden');
-                    const futureEvents = data.events.slice(1);
+                    // OTHER EVENTS
+                    if (data.events.length > 1) {
+                        eventsList.classList.remove('hidden');
+                        const futureEvents = data.events.slice(1);
 
-                    eventsList.innerHTML = `
+                        eventsList.innerHTML = `
                         <p class="text-[10px] uppercase font-bold text-white/30 px-2 mb-2">Futuros</p>
                         ${futureEvents.map(evt => `
                         <div class="glass-panel p-4 rounded-xl flex items-center justify-between group">
@@ -319,13 +325,13 @@
                             </form>` : ''}
                         </div>
                     `).join('')}`;
+                    }
                 }
-            }
 
 
-            const mural = document.getElementById('muralList');
-            if (data.posts && data.posts.length > 0) {
-                mural.innerHTML = data.posts.map(post => `
+                const mural = document.getElementById('muralList');
+                if (data.posts && data.posts.length > 0) {
+                    mural.innerHTML = data.posts.map(post => `
                     <div class="glass-panel p-5 rounded-2xl relative group">
                         ${data.isLeader ? `
                         <form action="/pgm/delete-post" method="POST" class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition" onsubmit="return confirm('Apagar?')">
@@ -346,30 +352,95 @@
                         </a>` : ''}
                     </div>
                 `).join('');
-            } else {
-                mural.innerHTML = `
+                } else {
+                    mural.innerHTML = `
                     <div class="text-center py-8 glass-panel rounded-2xl border-dashed border-2 border-white/10">
                         <p class="text-white/30 text-xs">Nenhum recado no mural ainda.</p>
                     </div>
                 `;
-            }
+                }
 
-            const membersDiv = document.getElementById('membersList');
-            membersDiv.innerHTML = data.members.map(m => `
-                <div class="flex flex-col items-center relative group">
-                    <div class="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-sm font-serif font-bold text-white mb-2 border border-white/20 shadow-lg">
-                        ${m.name.charAt(0)}
-                    </div>
-                    <span class="text-[9px] text-white/60 text-center leading-tight truncate w-full">${m.name.split(' ')[0]}</span>
-                    ${data.isLeader && m.id !== uid ? `
-                    <form action="/pgm/remove" method="POST" class="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition" onsubmit="return confirm('Remover?')">
-                        <input type="hidden" name="memberId" value="${m.id}">
-                        <button class="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] shadow-md">✕</button>
-                    </form>` : ''}
+                // MEMBERS LIST REDESIGN
+                const membersDiv = document.getElementById('membersList');
+                const isLeader = data.isLeader;
+                const currentUid = uid;
+
+                // Header with Manage Button if Leader
+                const membersHeader = document.getElementById('membersHeaderWrapper');
+                if (isLeader && membersHeader && !document.getElementById('btnManageMembers')) {
+                    const btnManage = document.createElement('button');
+                    btnManage.id = 'btnManageMembers';
+                    btnManage.className = "text-[10px] font-bold text-white/40 uppercase tracking-wider hover:text-white transition ml-auto border border-white/10 px-3 py-1 rounded-full";
+                    btnManage.innerText = "Gerenciar";
+                    btnManage.onclick = toggleMemberEdit;
+                    membersHeader.appendChild(btnManage);
+                }
+
+                membersDiv.className = "grid grid-cols-1 gap-3"; // Mobile friendly stack
+
+                membersDiv.innerHTML = data.members.map(m => {
+                    const isMe = m.id === currentUid;
+                    const isMemberLeader = m.role === 'lider' || m.role === 'admin' || m.role === 'supervisor'; // Heuristic for role display
+
+                    // Initials
+                    const initials = m.name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+
+                    return `
+                <div class="glass-panel p-3 rounded-xl flex items-center justify-between border border-white/5 relative overflow-hidden group">
+                     <!-- Left: Avatar & Info -->
+                     <div class="flex items-center gap-3 relative z-10 w-full">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-white/10 to-white/5 flex items-center justify-center text-xs font-bold text-white border border-white/10 shadow-inner">
+                            ${initials}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-bold text-white truncate flex items-center gap-2">
+                                ${m.name}
+                                ${isMe ? '<span class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded text-white/50">Você</span>' : ''}
+                            </p>
+                            <p class="text-[10px] text-white/40 uppercase tracking-wider font-bold">
+                                ${isMemberLeader ? 'Líder / Co-Líder' : 'Membro'}
+                            </p>
+                        </div>
+                     </div>
+
+                     <!-- Delete Action (Hidden by default, toggled via JS class) -->
+                     ${isLeader && !isMe ? `
+                     <div class="member-action hidden transition-all duration-300 ml-3">
+                        <form action="/pgm/remove" method="POST" onsubmit="return confirm('Remover ${m.name}?')">
+                             <input type="hidden" name="memberId" value="${m.id}">
+                             <button class="bg-red-500/20 hover:bg-red-500 text-red-200 hover:text-white w-9 h-9 rounded-full flex items-center justify-center border border-red-500/30 transition shadow-lg">
+                                ✕
+                             </button>
+                        </form>
+                     </div>
+                     ` : ''}
                 </div>
-            `).join('');
+                `;
+                }).join('');
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById('pgmLoader').classList.add('hidden');
+            alert("Erro ao carregar PGM: " + err.message);
         }
     });
+
+    let isEditMode = false;
+    function toggleMemberEdit() {
+        isEditMode = !isEditMode;
+        const btn = document.getElementById('btnManageMembers');
+        const tasks = document.querySelectorAll('.member-action');
+
+        if (isEditMode) {
+            btn.innerText = "Concluir";
+            btn.className = "text-[10px] font-bold text-green-400 uppercase tracking-wider hover:text-green-300 transition ml-auto border border-green-500/30 bg-green-500/10 px-3 py-1 rounded-full";
+            tasks.forEach(t => t.classList.remove('hidden'));
+        } else {
+            btn.innerText = "Gerenciar";
+            btn.className = "text-[10px] font-bold text-white/40 uppercase tracking-wider hover:text-white transition ml-auto border border-white/10 px-3 py-1 rounded-full";
+            tasks.forEach(t => t.classList.add('hidden'));
+        }
+    }
 
     // FUNCTIONS MUST BE GLOBAL FOR ONCLICK
     async function requestEntry() {
