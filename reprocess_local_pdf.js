@@ -33,7 +33,7 @@ async function processWithChatGPT(textoDoPDF) {
                       "extras": [ 
                         { 
                             "titulo": "Título (ex: Compreendendo..., Manual de Disciplinas...)", 
-                            "conteudo": "Texto COMPLETO desta seção. \nRegra 1 (Listas): Se for o 'Manual de Disciplinas', use <ol> e <li> sem números no texto.\nRegra 2 (Texto Corrido): Se for um texto longo (como 'Compreendendo...'), VOCÊ É OBRIGADO A QUEBRAR EM VÁRIOS PARÁGRAFOS (<p>). Não retorne um bloco único de texto. Divida o conteúdo em pelo menos 3 ou 4 parágrafos lógicos para ficar harmonioso e fácil de ler." 
+                            "conteudo": "Texto COMPLETO desta seção. NÃO RESUMA.\n\nRegra 1 (Listas Numeradas - 'Manual de Disciplinas'):\n- ETAPA A: Inclua os parágrafos introdutórios (ex: 'Para apoiar essa caminhada...', 'O discipulado não acontece...') em <p>.\n- ETAPA B: USE a tag <ol> para os 10 itens. NÃO coloque números no texto (deixe o <ol> numerar). Título em <STRONG>.\n- ETAPA C: Inclua o texto APÓS a lista (ex: 'De forma prática...', 'Caminhemos juntos') como novos parágrafos <p>.\n\nRegra 2 (Texto Longo - 'Compreendendo...'):\n- QUEBRE O TEXTO em vários parágrafos curtos (<p>)." 
                         } 
                       ],
                       "devocionais": [
