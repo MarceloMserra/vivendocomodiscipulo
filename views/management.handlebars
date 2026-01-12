@@ -1,0 +1,352 @@
+<div class="pb-24 animate-fade-in-down">
+
+    <!-- HEADER & STATS -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-serif font-bold text-white mb-1 px-2">Gestão Global</h2>
+        <p class="text-white/50 text-xs px-2 uppercase tracking-widest mb-6">Administração do Reino</p>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 px-1">
+            <div
+                class="glass-panel p-4 rounded-2xl relative overflow-hidden group hover:bg-white/10 transition border border-white/10">
+                <div class="relative z-10">
+                    <p class="text-[10px] text-white/50 font-bold uppercase tracking-wider mb-1">Total de Membros</p>
+                    <h3 class="text-3xl font-bold text-white" id="stat-total">-</h3>
+                </div>
+                <div
+                    class="absolute -right-2 -bottom-4 text-6xl opacity-5 group-hover:opacity-10 transition text-white">
+                    👥</div>
+            </div>
+            <div
+                class="glass-panel p-4 rounded-2xl relative overflow-hidden group hover:bg-white/10 transition border border-yellow-500/20">
+                <div class="relative z-10">
+                    <p class="text-[10px] text-yellow-200/50 font-bold uppercase tracking-wider mb-1">Líderes</p>
+                    <h3 class="text-3xl font-bold text-yellow-400" id="stat-leaders">-</h3>
+                </div>
+                <div
+                    class="absolute -right-2 -bottom-4 text-6xl opacity-5 group-hover:opacity-10 transition text-yellow-500">
+                    👑</div>
+            </div>
+            <div
+                class="glass-panel p-4 rounded-2xl relative overflow-hidden group hover:bg-white/10 transition border border-blue-500/20">
+                <div class="relative z-10">
+                    <p class="text-[10px] text-blue-200/50 font-bold uppercase tracking-wider mb-1">Supervisores</p>
+                    <h3 class="text-3xl font-bold text-blue-400" id="stat-supervisors">-</h3>
+                </div>
+                <div
+                    class="absolute -right-2 -bottom-4 text-6xl opacity-5 group-hover:opacity-10 transition text-blue-500">
+                    🛡️</div>
+            </div>
+            <!-- Future: Sem Grupo Stats -->
+        </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div
+        class="glass-panel p-2 rounded-2xl mb-6 flex flex-col md:flex-row gap-2 sticky top-4 z-30 shadow-2xl backdrop-blur-xl border border-white/20">
+        <div class="relative flex-1">
+            <span class="absolute left-4 top-3.5 text-white/30">🔍</span>
+            <input type="text" id="searchInput" placeholder="Buscar por nome..."
+                class="w-full bg-black/40 text-white pl-10 pr-4 py-3 rounded-xl border border-white/5 text-sm outline-none focus:border-imbb-gold transition"
+                onkeyup="debounceSearch()">
+        </div>
+        <div class="flex gap-2">
+            <select id="roleFilter" onchange="resetAndLoad()"
+                class="bg-black/40 text-white px-4 py-3 rounded-xl border border-white/5 text-sm outline-none focus:border-imbb-gold cursor-pointer">
+                <option value="all">Todos os Cargos</option>
+                <option value="membro">Membros</option>
+                <option value="lider">Líderes</option>
+                <option value="supervisor">Supervisores</option>
+                <option value="admin">Admins</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- TABLE / LIST -->
+    <div class="glass-panel rounded-[1.5rem] overflow-hidden min-h-[400px] relative border border-white/10">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-white/10 text-[10px] uppercase text-white/40 tracking-wider">
+                        <th class="p-4 font-bold">Nome / Cargo</th>
+                        <th class="p-4 font-bold">Liderança</th>
+                        <th class="p-4 font-bold text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody" class="text-sm"></tbody>
+            </table>
+        </div>
+
+        <!-- Loader / Empty State -->
+        <div id="tableLoader"
+            class="hidden absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-10">
+            <div class="w-8 h-8 border-2 border-imbb-gold border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <div id="emptyState" class="hidden py-20 text-center">
+            <p class="text-white/30 text-xs italic">Nenhum membro encontrado.</p>
+        </div>
+
+        <!-- Load More -->
+        <div class="p-4 text-center border-t border-white/5 hidden" id="loadMoreContainer">
+            <button onclick="loadUsers()"
+                class="text-xs font-bold text-white/50 hover:text-white uppercase tracking-wider py-2 px-4 hover:bg-white/5 rounded-lg transition">
+                Carregar Mais ▼
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<!-- EDIT MODAL -->
+<div id="editModal"
+    class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fadeIn">
+    <div class="glass-panel w-full max-w-md rounded-[2rem] p-8 relative border border-white/20 shadow-2xl">
+        <button onclick="closeEditModal()"
+            class="absolute top-6 right-6 text-white/30 hover:text-white transition bg-white/5 rounded-full w-8 h-8 flex items-center justify-center">✕</button>
+
+        <div class="flex items-center gap-4 mb-8">
+            <div id="modalAvatar"
+                class="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-xl font-bold border border-white/20 shadow-inner">
+            </div>
+            <div>
+                <h3 class="text-2xl font-serif font-bold text-white leading-tight" id="modalName">Nome</h3>
+                <p class="text-white/40 text-xs uppercase tracking-wider">Gerenciamento de Perfil</p>
+            </div>
+        </div>
+
+        <input type="hidden" id="modalUid">
+
+        <div class="space-y-6">
+            <!-- Role Selector -->
+            <div>
+                <label class="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-3 block">Definir
+                    Cargo</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="setModalRole('membro')" id="btn-role-membro"
+                        class="modal-role-btn p-3 rounded-xl border border-white/10 bg-white/5 text-white/60 text-xs font-bold uppercase hover:bg-white/10 transition">Membro</button>
+                    <button onclick="setModalRole('lider')" id="btn-role-lider"
+                        class="modal-role-btn p-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5 text-yellow-200/60 text-xs font-bold uppercase hover:bg-yellow-500/10 transition">Líder</button>
+                    <button onclick="setModalRole('supervisor')" id="btn-role-supervisor"
+                        class="modal-role-btn p-3 rounded-xl border border-blue-500/20 bg-blue-500/5 text-blue-200/60 text-xs font-bold uppercase hover:bg-blue-500/10 transition">Supervisor</button>
+                    <button onclick="setModalRole('admin')" id="btn-role-admin"
+                        class="modal-role-btn p-3 rounded-xl border border-purple-500/20 bg-purple-500/5 text-purple-200/60 text-xs font-bold uppercase hover:bg-purple-500/10 transition">Admin</button>
+                </div>
+            </div>
+
+            <!-- Group Selector (Only if Member/Leader?) -> Actually mostly for members. Leaders have their own group. -->
+            <div id="groupSelectorContainer">
+                <label class="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-3 block">Alocar em
+                    PGM</label>
+                <select id="modalPgmSelect"
+                    class="w-full bg-black/40 border border-white/10 p-3 rounded-xl text-white text-sm outline-none focus:border-white/30">
+                    <option value="">Sem Grupo</option>
+                    <!-- Options populated via JS -->
+                </select>
+            </div>
+
+            <button onclick="saveChanges()"
+                class="w-full bg-imbb-gold text-imbb-navy font-bold py-4 rounded-xl shadow-lg hover:brightness-110 transition uppercase text-xs tracking-widest mt-4">
+                Salvar Alterações
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let lastDocId = null;
+    let isLoading = false;
+    let currentSearch = '';
+    let currentRole = 'all';
+    let groupsCache = [];
+    let selectedRole = ''; // For modal state
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadStats();
+        loadGroups(); // Pre-load groups for modal
+        loadUsers();
+    });
+
+    async function loadStats() {
+        const res = await fetch('/api/gestao/stats', { method: 'POST' });
+        const data = await res.json();
+        document.getElementById('stat-total').innerText = data.total;
+        document.getElementById('stat-leaders').innerText = data.leaders;
+        document.getElementById('stat-supervisors').innerText = data.supervisors;
+    }
+
+    async function loadGroups() {
+        const res = await fetch('/api/gestao/groups', { method: 'POST' });
+        groupsCache = await res.json();
+        const sel = document.getElementById('modalPgmSelect');
+        groupsCache.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g.pgmId;
+            opt.innerText = g.name;
+            sel.appendChild(opt);
+        });
+    }
+
+    let searchTimeout;
+    function debounceSearch() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentSearch = document.getElementById('searchInput').value;
+            resetAndLoad();
+        }, 500);
+    }
+
+    function resetAndLoad() {
+        document.getElementById('usersTableBody').innerHTML = '';
+        lastDocId = null;
+        currentRole = document.getElementById('roleFilter').value;
+        document.getElementById('loadMoreContainer').classList.add('hidden');
+        document.getElementById('emptyState').classList.add('hidden');
+        loadUsers();
+    }
+
+    async function loadUsers() {
+        if (isLoading) return;
+        isLoading = true;
+        document.getElementById('tableLoader').classList.remove('hidden');
+
+        try {
+            const res = await fetch('/api/gestao/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ limit: 20, lastId: lastDocId, roleFilter: currentRole, search: currentSearch })
+            });
+            const data = await res.json();
+
+            lastDocId = data.lastId;
+            const tbody = document.getElementById('usersTableBody');
+
+            if (data.users.length === 0 && !tbody.hasChildNodes()) {
+                document.getElementById('emptyState').classList.remove('hidden');
+            }
+
+            data.users.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-white/5 hover:bg-white/5 transition group";
+
+                // Badge Style
+                let badgeClass = "bg-white/10 text-white/60";
+                if (u.role === 'admin') badgeClass = "bg-purple-500/20 text-purple-200 border border-purple-500/30";
+                if (u.role === 'supervisor') badgeClass = "bg-blue-500/20 text-blue-200 border border-blue-500/30";
+                if (u.role === 'lider') badgeClass = "bg-yellow-500/20 text-yellow-200 border border-yellow-500/30";
+
+                // Avatar
+                const avatarHtml = u.photoUrl
+                    ? `<img src="\${u.photoUrl}" class="w-8 h-8 rounded-full object-cover">`
+                    : `<div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">\${u.name.charAt(0)}</div>`;
+
+                tr.innerHTML = `
+                <td class="p-4">
+                    <div class="flex items-center gap-3">
+                        \${avatarHtml}
+                        <div>
+                            <p class="font-bold text-white leading-tight">\${u.name}</p>
+                            <span class="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded \${badgeClass}">\${u.role}</span>
+                        </div>
+                    </div>
+                </td>
+                <td class="p-4">
+                    <p class="text-xs text-white/50">\${u.leaderName || '-'}</p>
+                </td>
+                <td class="p-4 text-right">
+                    <button onclick="openEditModal('\${u.uid}', '\${u.name}', '\${u.role}', '\${u.pgmId}', '\${u.photoUrl || ''}')" class="text-white/40 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-lg transition">⚙️</button>
+                </td>
+            `;
+                tbody.appendChild(tr);
+            });
+
+            if (lastDocId) document.getElementById('loadMoreContainer').classList.remove('hidden');
+            else document.getElementById('loadMoreContainer').classList.add('hidden');
+
+        } catch (e) { console.error(e); }
+
+        isLoading = false;
+        document.getElementById('tableLoader').classList.add('hidden');
+    }
+
+    // --- MODAL LOGIC ---
+    function openEditModal(uid, name, role, pgmId, photoUrl) {
+        document.getElementById('modalUid').value = uid;
+        document.getElementById('modalName').innerText = name;
+
+        // Set Avatar
+        const av = document.getElementById('modalAvatar');
+        if (photoUrl && photoUrl !== 'undefined') {
+            av.innerHTML = `<img src="\${photoUrl}" class="w-full h-full rounded-full object-cover">`;
+        } else {
+            av.innerHTML = name.charAt(0);
+            av.style.backgroundImage = 'none';
+            av.className = "w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-xl font-bold border border-white/20 shadow-inner text-white";
+        }
+
+        // Set Role State
+        selectedRole = role;
+        updateModalRoleUI();
+
+        // Set PGM
+        document.getElementById('modalPgmSelect').value = (pgmId && !pgmId.startsWith('pgm_')) ? pgmId : "";
+
+        // Show Modal
+        document.getElementById('editModal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').classList.add('hidden');
+    }
+
+    function setModalRole(r) {
+        selectedRole = r;
+        updateModalRoleUI();
+    }
+
+    function updateModalRoleUI() {
+        // Reset all
+        document.querySelectorAll('.modal-role-btn').forEach(b => {
+            b.classList.remove('ring-2', 'ring-white', 'opacity-100');
+            b.classList.add('opacity-50');
+        });
+        // Active
+        const btn = document.getElementById(`btn-role-\${selectedRole}`);
+        if (btn) {
+            btn.classList.add('ring-2', 'ring-white', 'opacity-100');
+            btn.classList.remove('opacity-50');
+        }
+
+        // Logic: If role is Leader or Supervisor/Admin, PGM selector might be irrelevant or different context
+        // For simplicity, we leave PGM selector active, but if they become Leader, backend handles creating their group.
+    }
+
+    async function saveChanges() {
+        const uid = document.getElementById('modalUid').value;
+        const pgmId = document.getElementById('modalPgmSelect').value;
+        const adminUid = localStorage.getItem('userUid');
+
+        if (!confirm("Salvar alterações?")) return;
+
+        try {
+            const res = await fetch('/api/gestao/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    adminUid,
+                    targetUid: uid,
+                    updates: { role: selectedRole, pgmId: selectedRole === 'lider' ? null : (pgmId || null) }
+                    // Note: logic for pgmId on backend handles creation if leader. 
+                    // passing pgmId here effectively moves the member. 
+                })
+            });
+            const d = await res.json();
+            if (d.success) {
+                closeEditModal();
+                // Refresh table row? For now full reload or reset is safer to sync state
+                resetAndLoad();
+                loadStats(); // Update counters
+            } else {
+                alert("Erro: " + d.error);
+            }
+        } catch (e) { alert("Erro de conexão"); }
+    }
+</script>

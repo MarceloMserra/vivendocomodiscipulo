@@ -8,6 +8,7 @@ const userController = require('../controllers/userController');
 const pgmController = require('../controllers/pgmController');
 const adminController = require('../controllers/adminController');
 const contentController = require('../controllers/contentController');
+const managementController = require('../controllers/managementController');
 
 // --- Routes ---
 
@@ -20,6 +21,13 @@ router.get('/profile', homeController.getProfilePage);
 // 2. Admin Pages
 router.get('/admin', adminController.getAdminPage);
 router.get('/pgm', pgmController.getPgmPage);
+router.get('/gestao', managementController.getManagementPage);
+
+// 2.1 API - Management (New Scalable)
+router.post('/api/gestao/stats', managementController.getDashboardStats);
+router.post('/api/gestao/users', managementController.getUsersPaginated);
+router.post('/api/gestao/update', managementController.updateUser);
+router.post('/api/gestao/groups', managementController.getGroupsList);
 
 // 3. API - User Profile
 router.post('/api/profile/update', uploadImage.single("photo"), userController.updateProfile);
