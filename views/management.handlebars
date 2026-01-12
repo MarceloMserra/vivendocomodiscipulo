@@ -36,7 +36,6 @@
                     class="absolute -right-2 -bottom-4 text-6xl opacity-5 group-hover:opacity-10 transition text-blue-500">
                     🛡️</div>
             </div>
-            <!-- Future: Sem Grupo Stats -->
         </div>
     </div>
 
@@ -58,6 +57,20 @@
                 <option value="supervisor">Supervisores</option>
                 <option value="admin">Admins</option>
             </select>
+        </div>
+    </div>
+    <!-- FILTER FEEDBACK -->
+    <div id="activeFilterDisplay" class="hidden mb-4 flex items-center justify-between animate-fadeIn px-2">
+        <div class="flex items-center gap-3">
+            <button onclick="clearGroupFilter()"
+                class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
+                title="Voltar">
+                ←
+            </button>
+            <div class="flex items-center gap-2">
+                <span class="text-yellow-500">👑</span>
+                <span class="text-white font-bold text-lg"><span id="filterGroupName">...</span></span>
+            </div>
         </div>
     </div>
 
@@ -132,7 +145,7 @@
                 </div>
             </div>
 
-            <!-- Group Selector (Only if Member/Leader?) -> Actually mostly for members. Leaders have their own group. -->
+            <!-- Group Selector -->
             <div id="groupSelectorContainer">
                 <label class="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-3 block">Alocar em
                     PGM</label>
@@ -157,11 +170,11 @@
     let currentSearch = '';
     let currentRole = 'all';
     let groupsCache = [];
-    let selectedRole = ''; // For modal state
+    let selectedRole = '';
 
     document.addEventListener('DOMContentLoaded', () => {
         loadStats();
-        loadGroups(); // Pre-load groups for modal
+        loadGroups();
         loadUsers();
     });
 
@@ -194,13 +207,42 @@
         }, 500);
     }
 
-    function resetAndLoad() {
+    let currentGroupFilter = null;
+
+    function resetAndLoad(filterByGroup = null) {
         document.getElementById('usersTableBody').innerHTML = '';
         lastDocId = null;
+
+        // Handle Group Filter Logic
+        if (filterByGroup !== undefined) {
+            // If passed explicitly (even null), update state
+            currentGroupFilter = filterByGroup;
+        }
+
+        // Update UI for Filter
+        const filterDisplay = document.getElementById('activeFilterDisplay');
+        if (currentGroupFilter) {
+            filterDisplay.classList.remove('hidden');
+            // Hide Search and Role Filter to simplify view when drill-down is active
+            // document.getElementById('roleFilter').parentElement.classList.add('hidden'); // Optional: hide filters
+            currentSearch = '';
+            document.getElementById('searchInput').value = '';
+        } else {
+            filterDisplay.classList.add('hidden');
+            // document.getElementById('roleFilter').parentElement.classList.remove('hidden');
+        }
+
         currentRole = document.getElementById('roleFilter').value;
+
         document.getElementById('loadMoreContainer').classList.add('hidden');
         document.getElementById('emptyState').classList.add('hidden');
+
         loadUsers();
+    }
+
+    function clearGroupFilter() {
+        document.getElementById('roleFilter').value = 'all';
+        resetAndLoad(null);
     }
 
     async function loadUsers() {
@@ -208,51 +250,80 @@
         isLoading = true;
         document.getElementById('tableLoader').classList.remove('hidden');
 
+        const currentUserUid = localStorage.getItem('userUid');
+
         try {
             const res = await fetch('/api/gestao/users', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ limit: 20, lastId: lastDocId, roleFilter: currentRole, search: currentSearch })
+                body: JSON.stringify({
+                    limit: 20,
+                    lastId: lastDocId,
+                    roleFilter: currentRole,
+                    search: currentSearch,
+                    groupFilter: currentGroupFilter, // Use global state
+                    uid: currentUserUid
+                })
             });
             const data = await res.json();
 
             lastDocId = data.lastId;
             const tbody = document.getElementById('usersTableBody');
 
+            if (data.meta && data.meta.activeGroupName) {
+                document.getElementById('filterGroupName').innerText = data.meta.activeGroupName;
+            }
+
             if (data.users.length === 0 && !tbody.hasChildNodes()) {
                 document.getElementById('emptyState').classList.remove('hidden');
+            } else {
+                document.getElementById('emptyState').classList.add('hidden');
             }
 
             data.users.forEach(u => {
                 const tr = document.createElement('tr');
                 tr.className = "border-b border-white/5 hover:bg-white/5 transition group";
 
-                // Badge Style
                 let badgeClass = "bg-white/10 text-white/60";
                 if (u.role === 'admin') badgeClass = "bg-purple-500/20 text-purple-200 border border-purple-500/30";
                 if (u.role === 'supervisor') badgeClass = "bg-blue-500/20 text-blue-200 border border-blue-500/30";
                 if (u.role === 'lider') badgeClass = "bg-yellow-500/20 text-yellow-200 border border-yellow-500/30";
 
-                // Avatar
                 const avatarHtml = u.photoUrl
-                    ? `<img src="\${u.photoUrl}" class="w-8 h-8 rounded-full object-cover">`
-                    : `<div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">\${u.name.charAt(0)}</div>`;
+                    ? `<img src="${u.photoUrl}" class="w-8 h-8 rounded-full object-cover">`
+                    : `<div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">${u.name.charAt(0)}</div>`;
+
+                // Drill down button for Leaders
+                let drillDownBtn = '';
+                if (u.role === 'lider') {
+                    drillDownBtn = `
+                    <button onclick="resetAndLoad('${u.pgmId || ('pgm_' + u.uid)}')" title="Ver Membros" class="text-xs bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded ml-2 transition">
+                        👥 Ver Grupo
+                    </button>`;
+                }
 
                 tr.innerHTML = `
                 <td class="p-4">
                     <div class="flex items-center gap-3">
-                        \${avatarHtml}
+                        ${avatarHtml}
                         <div>
-                            <p class="font-bold text-white leading-tight">\${u.name}</p>
-                            <span class="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded \${badgeClass}">\${u.role}</span>
+                            <div class="flex items-center gap-2">
+                                <p class="font-bold text-white leading-tight">
+                                    ${u.name} 
+                                    ${u.isLeader ? `<span class="text-xs text-yellow-500/80 font-normal ml-1">(${u.memberCount} membros)</span>` : ''}
+                                </p>
+                                ${drillDownBtn}
+                            </div>
+                            <span class="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${badgeClass}">${u.role}</span>
                         </div>
                     </div>
                 </td>
                 <td class="p-4">
-                    <p class="text-xs text-white/50">\${u.leaderName || '-'}</p>
+                    <!-- Mostra o NOME DO LIDER aqui para os membros -->
+                    <p class="text-xs text-white/50 font-bold">${u.leaderName || '-'}</p>
                 </td>
                 <td class="p-4 text-right">
-                    <button onclick="openEditModal('\${u.uid}', '\${u.name}', '\${u.role}', '\${u.pgmId}', '\${u.photoUrl || ''}')" class="text-white/40 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-lg transition">⚙️</button>
+                    <button onclick="openEditModal('${u.uid}', '${u.name}', '${u.role}', '${u.pgmId}', '${u.photoUrl || ''}')" class="text-white/40 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-lg transition">⚙️</button>
                 </td>
             `;
                 tbody.appendChild(tr);
@@ -267,29 +338,22 @@
         document.getElementById('tableLoader').classList.add('hidden');
     }
 
-    // --- MODAL LOGIC ---
     function openEditModal(uid, name, role, pgmId, photoUrl) {
         document.getElementById('modalUid').value = uid;
         document.getElementById('modalName').innerText = name;
 
-        // Set Avatar
         const av = document.getElementById('modalAvatar');
-        if (photoUrl && photoUrl !== 'undefined') {
-            av.innerHTML = `<img src="\${photoUrl}" class="w-full h-full rounded-full object-cover">`;
+        if (photoUrl && photoUrl !== 'undefined' && photoUrl !== '') {
+            av.innerHTML = `<img src="${photoUrl}" class="w-full h-full rounded-full object-cover">`;
         } else {
             av.innerHTML = name.charAt(0);
             av.style.backgroundImage = 'none';
             av.className = "w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-xl font-bold border border-white/20 shadow-inner text-white";
         }
 
-        // Set Role State
         selectedRole = role;
         updateModalRoleUI();
-
-        // Set PGM
         document.getElementById('modalPgmSelect').value = (pgmId && !pgmId.startsWith('pgm_')) ? pgmId : "";
-
-        // Show Modal
         document.getElementById('editModal').classList.remove('hidden');
     }
 
@@ -303,20 +367,15 @@
     }
 
     function updateModalRoleUI() {
-        // Reset all
         document.querySelectorAll('.modal-role-btn').forEach(b => {
             b.classList.remove('ring-2', 'ring-white', 'opacity-100');
             b.classList.add('opacity-50');
         });
-        // Active
-        const btn = document.getElementById(`btn-role-\${selectedRole}`);
+        const btn = document.getElementById(`btn-role-${selectedRole}`);
         if (btn) {
             btn.classList.add('ring-2', 'ring-white', 'opacity-100');
             btn.classList.remove('opacity-50');
         }
-
-        // Logic: If role is Leader or Supervisor/Admin, PGM selector might be irrelevant or different context
-        // For simplicity, we leave PGM selector active, but if they become Leader, backend handles creating their group.
     }
 
     async function saveChanges() {
@@ -324,7 +383,7 @@
         const pgmId = document.getElementById('modalPgmSelect').value;
         const adminUid = localStorage.getItem('userUid');
 
-        if (!confirm("Salvar alterações?")) return;
+        // if (!confirm("Salvar alterações?")) return; // Removed annoying confirm
 
         try {
             const res = await fetch('/api/gestao/update', {
@@ -334,16 +393,14 @@
                     adminUid,
                     targetUid: uid,
                     updates: { role: selectedRole, pgmId: selectedRole === 'lider' ? null : (pgmId || null) }
-                    // Note: logic for pgmId on backend handles creation if leader. 
-                    // passing pgmId here effectively moves the member. 
                 })
             });
             const d = await res.json();
             if (d.success) {
                 closeEditModal();
-                // Refresh table row? For now full reload or reset is safer to sync state
                 resetAndLoad();
-                loadStats(); // Update counters
+                loadStats();
+                // alert("Sucesso!"); // Removed annoying success alert
             } else {
                 alert("Erro: " + d.error);
             }
