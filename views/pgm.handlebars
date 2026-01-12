@@ -59,6 +59,36 @@
             <div class="absolute top-0 right-0 w-40 h-40 bg-imbb-gold/20 rounded-full -mr-10 -mt-10 blur-3xl"></div>
         </div>
 
+        <!-- AGENDA / CALENDAR PANEL -->
+        <div class="mb-10 animate-slide-up-fade" style="animation-delay: 100ms;">
+            <div class="flex items-center justify-between mb-4 px-2">
+                <div class="flex items-center gap-2">
+                    <div class="w-1 h-4 bg-purple-400 rounded-full"></div>
+                    <h3 class="font-bold text-white text-sm uppercase tracking-wide">Agenda & Encontros</h3>
+                </div>
+                <!-- LEADER ONLY: Add Event Button -->
+                <button onclick="document.getElementById('eventFormModal').classList.remove('hidden')"
+                    class="hidden text-[10px] font-bold bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg border border-white/5 transition uppercase tracking-wider"
+                    id="btnAddEvent">
+                    📅 Marcar
+                </button>
+            </div>
+
+            <!-- NEXT EVENT HIGHLIGHT -->
+            <div id="nextEventContainer">
+                <!-- If no event, show empty state -->
+                <div class="glass-panel p-6 rounded-2xl border border-dashed border-white/10 text-center">
+                    <p class="text-white/30 text-xs uppercase tracking-widest mb-1">Próximo Encontro</p>
+                    <p class="text-white/50 text-sm">Nenhum encontro agendado.</p>
+                </div>
+            </div>
+
+            <!-- UPCOMING EVENTS LIST -->
+            <div id="eventsList" class="mt-4 space-y-2 hidden">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+
         <div id="leaderTools" class="hidden mb-10">
             <div class="flex items-center gap-2 mb-4 px-2">
                 <div class="w-1 h-4 bg-imbb-gold rounded-full"></div>
@@ -133,6 +163,51 @@
     </div>
 </div>
 
+<!-- EVENT MODAL -->
+<div id="eventFormModal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn">
+    <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative border border-white/20 shadow-2xl">
+        <button onclick="document.getElementById('eventFormModal').classList.add('hidden')"
+            class="absolute top-4 right-4 text-white/30 hover:text-white transition">✕</button>
+
+        <h3 class="text-lg font-serif font-bold text-white mb-6">📅 Marcar Encontro</h3>
+
+        <form action="/pgm/event/add" method="POST" class="space-y-4">
+            <input type="hidden" name="pgmId" id="eventPgmId">
+
+            <div>
+                <label class="text-[9px] uppercase font-bold text-white/40 block mb-1">O que será?</label>
+                <input type="text" name="title" placeholder="Ex: Estudo Bíblico, Jantar..." required
+                    class="w-full text-sm p-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-purple-500 text-white transition">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[9px] uppercase font-bold text-white/40 block mb-1">Dia</label>
+                    <input type="date" name="date" required
+                        class="w-full text-sm p-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-purple-500 text-white transition scheme-dark">
+                </div>
+                <div>
+                    <label class="text-[9px] uppercase font-bold text-white/40 block mb-1">Hora</label>
+                    <input type="time" name="time" required
+                        class="w-full text-sm p-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-purple-500 text-white transition scheme-dark">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[9px] uppercase font-bold text-white/40 block mb-1">Local</label>
+                <input type="text" name="location" placeholder="Ex: Casa do João" required
+                    class="w-full text-sm p-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-purple-500 text-white transition">
+            </div>
+
+            <button type="submit"
+                class="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg transition mt-2">
+                Agendar
+            </button>
+        </form>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', async () => {
         const uid = localStorage.getItem('userUid');
@@ -157,22 +232,96 @@
         document.getElementById('pgmLoader').classList.add('hidden');
 
         if (!data.pgmId) {
+            // If User is Supervisor, DO NOT show "No Group" panel as default state, 
+            // because they have the Supervisor Panel. Unless they really want to join one?
+            // The user requested: "Supervisors also have groups". 
+            // So if they don't have one, showing "You don't have a PGM" is actually correct, 
+            // BUT it might be cluttering the view if they are just working.
+            // Let's keep it but maybe style it differently? 
+            // Or just ensure Supervisor Panel is top priority.
+
+            // If Supervisor, we refrain from showing the big "NO PGM" screen if they are in "Work Mode"?
+            // Whatever, user said "Aparece dizendo você ainda não tem um PGM".
+            // We will let it show, but ensure Supervisor Panel is visible ABOVE it. (It already is).
+
             document.getElementById('noGroupPanel').classList.remove('hidden');
         } else {
             document.getElementById('groupContent').classList.remove('hidden');
 
             const badge = document.getElementById('roleBadge');
             if (data.isLeader) {
-                badge.innerText = "LÍDER";
-                badge.className = "bg-imbb-gold text-imbb-navy text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-lg";
+                if (userRole === 'supervisor') {
+                    badge.innerText = "SUPERVISÃO & LIDERANÇA";
+                    badge.className = "bg-red-500/20 text-red-200 border border-red-500/30 text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-lg";
+                } else {
+                    badge.innerText = "LÍDER";
+                    badge.className = "bg-imbb-gold text-imbb-navy text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-lg";
+                }
 
                 document.getElementById('leaderTools').classList.remove('hidden');
+                document.getElementById('btnAddEvent').classList.remove('hidden'); // Show Add Event button
                 document.getElementById('formLeaderUid').value = uid;
                 document.getElementById('formPgmId').value = data.pgmId;
+                document.getElementById('eventPgmId').value = data.pgmId; // For Event Modal
                 document.getElementById('formAuthorName').value = userName || "Líder";
             } else {
                 badge.innerText = "MEMBRO";
             }
+
+            // --- RENDER AGENDA ---
+            const nextEventContainer = document.getElementById('nextEventContainer');
+            const eventsList = document.getElementById('eventsList');
+
+            if (data.events && data.events.length > 0) {
+                // NEXT EVENT (First one)
+                const next = data.events[0];
+                nextEventContainer.innerHTML = `
+                    <div class="glass-panel p-0 rounded-2xl relative overflow-hidden group border border-white/20 shadow-2xl">
+                        <div class="absolute inset-0 bg-gradient-to-br from-purple-600/30 to-blue-600/30"></div>
+                        <div class="relative p-6 flex flex-col items-center text-center">
+                            <p class="text-[10px] uppercase tracking-widest text-white/60 font-bold mb-2">Próximo Encontro</p>
+                            <h3 class="text-2xl font-serif font-bold text-white mb-1 leading-tight">${next.title}</h3>
+                            <div class="flex items-center gap-2 mb-4 bg-black/20 px-3 py-1 rounded-full border border-white/10">
+                                <span class="text-purple-300 font-bold text-sm">📅 ${next.formattedDate} · ${next.weekday}</span>
+                                <span class="w-[1px] h-3 bg-white/20"></span>
+                                <span class="text-white font-bold text-sm">⏰ ${next.formattedTime}</span>
+                            </div>
+                            <div class="text-xs text-white/50 flex items-center gap-1 mb-2">
+                                📍 ${next.location}
+                            </div>
+                            
+                            ${data.isLeader ? `
+                            <form action="/pgm/event/delete" method="POST" onsubmit="return confirm('Cancelar este encontro?')" class="mt-2">
+                                <input type="hidden" name="eventId" value="${next.id}">
+                                <button class="text-[9px] text-red-300 hover:text-red-100 uppercase font-bold tracking-wider opacity-60 hover:opacity-100 transition">cancelar evento</button>
+                            </form>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                // OTHER EVENTS
+                if (data.events.length > 1) {
+                    eventsList.classList.remove('hidden');
+                    const futureEvents = data.events.slice(1);
+
+                    eventsList.innerHTML = `
+                        <p class="text-[10px] uppercase font-bold text-white/30 px-2 mb-2">Futuros</p>
+                        ${futureEvents.map(evt => `
+                        <div class="glass-panel p-4 rounded-xl flex items-center justify-between group">
+                           <div>
+                                <p class="text-sm font-bold text-white leading-tight">${evt.title}</p>
+                                <p class="text-[10px] text-white/50">${evt.formattedDate} às ${evt.formattedTime}</p>
+                           </div>
+                           ${data.isLeader ? `
+                            <form action="/pgm/event/delete" method="POST" onsubmit="return confirm('Apagar este encontro?')">
+                                <input type="hidden" name="eventId" value="${evt.id}">
+                                <button class="text-xs text-white/20 hover:text-red-400 p-2 transition">✕</button>
+                            </form>` : ''}
+                        </div>
+                    `).join('')}`;
+                }
+            }
+
 
             const mural = document.getElementById('muralList');
             if (data.posts && data.posts.length > 0) {
@@ -222,10 +371,14 @@
         }
     });
 
+    // FUNCTIONS MUST BE GLOBAL FOR ONCLICK
     async function requestEntry() {
         const uid = localStorage.getItem('userUid');
         const name = localStorage.getItem('userName');
         const btn = document.getElementById('btnRequest');
+
+        // Prompt for Leader Name
+        const requestedLeader = prompt("Você já participa de um grupo? Se sim, digite o nome do seu líder aqui (ou deixe em branco):");
 
         btn.innerText = "Enviando...";
         btn.disabled = true;
@@ -233,14 +386,14 @@
         const res = await fetch('/api/pgm/request', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ uid, name, whatsapp: 'Não informado' })
+            body: JSON.stringify({ uid, name, whatsapp: 'Não informado', requestedLeader })
         });
         const d = await res.json();
         if (d.success) {
             btn.classList.add('hidden');
             document.getElementById('reqStatus').classList.remove('hidden');
         } else {
-            alert('Erro ao solicitar.');
+            alert('Erro ao solicitar: ' + (d.message || 'Tente novamente'));
             btn.innerText = "Tentar Novamente";
             btn.disabled = false;
         }
@@ -255,36 +408,115 @@
 
         if (data.requests.length > 0) {
             list.innerHTML = data.requests.map(r => `
-                <div class="bg-black/30 p-4 rounded-xl border border-white/5 space-y-3">
+                <div class="bg-black/40 p-4 rounded-xl border border-white/10 space-y-3 shadow-lg" id="req-card-${r.id}">
                     <div>
-                        <p class="font-bold text-white text-sm">${r.name}</p>
+                        <p class="font-bold text-white text-sm flex items-center gap-2">
+                            ${r.name}
+                            ${r.requestedLeader && r.requestedLeader !== 'Não informado'
+                    ? `<span class="text-[9px] bg-yellow-500/20 text-yellow-200 px-2 py-0.5 rounded border border-yellow-500/20">Líder: ${r.requestedLeader}</span>`
+                    : ''}
+                        </p>
                         <p class="text-[10px] text-white/50">Solicitado em: ${new Date(r.createdAt?._seconds * 1000).toLocaleDateString()}</p>
                     </div>
-                    <div class="flex gap-2">
-                        <select id="sel-${r.id}" class="flex-1 bg-white/5 text-xs text-white p-2 rounded-lg border border-white/10 outline-none">
-                            <option value="">Escolher Grupo...</option>
-                            ${data.pgms.map(p => `<option value="${p.id}">${p.leaderName}</option>`).join('')}
+                    
+                    <div class="grid grid-cols-1 gap-2">
+                        <!-- Group Selector -->
+                        <select id="sel-${r.id}" class="w-full bg-white text-black font-bold p-2.5 rounded-lg border border-white/10 outline-none text-xs">
+                            <option value="" class="text-gray-500">Escolher Grupo...</option>
+                            ${data.pgms.map(p => `<option value="${p.id}" class="text-black">${p.leaderName}</option>`).join('')}
                         </select>
-                        <button onclick="assignMember('${r.id}', '${r.uid}')" class="bg-imbb-gold text-imbb-navy px-4 rounded-lg font-bold text-xs uppercase shadow hover:brightness-110">OK</button>
+                        
+                        <div class="flex gap-2">
+                            <!-- Role Selector -->
+                            <select id="role-${r.id}" class="flex-1 bg-white/10 text-white p-2.5 rounded-lg border border-white/10 outline-none text-xs">
+                                <option value="membro" class="text-black">Membro</option>
+                                <option value="lider" class="text-black">Líder</option>
+                            </select>
+
+                            <button onclick="assignMember('${r.id}', '${r.uid}')" class="bg-green-600 hover:bg-green-500 text-white px-6 rounded-lg font-bold text-xs uppercase shadow transition">OK</button>
+                            
+                            <!-- REJECT BUTTON -->
+                            <button onclick="rejectRequest('${r.id}')" title="Excluir Solicitação" class="bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white px-3 rounded-lg border border-red-500/20 transition">✕</button>
+                        </div>
                     </div>
                 </div>
             `).join('');
+        } else {
+            list.innerHTML = '<p class="text-white/40 text-sm text-center italic">Nenhuma solicitação pendente.</p>';
         }
     }
 
     async function assignMember(requestId, requestUid) {
-        const targetPgmId = document.getElementById(`sel-\${requestId}`).value;
-        if (!targetPgmId) return alert("Escolha um grupo!");
+        // DEBUG ALERT
+        // alert('Iniciando aprovação...'); 
 
-        if (!confirm("Confirmar encaminhamento?")) return;
+        const targetPgmId = document.getElementById(`sel-${requestId}`).value;
+        const role = document.getElementById(`role-${requestId}`).value;
+        const supervisorUid = localStorage.getItem('userUid');
+
+        // Validation: If Member, MUST select group. If Leader, can be empty (new group).
+        if (role === 'membro' && !targetPgmId) return alert("Para Membros, você DEVE escolher um grupo!");
+
+        const card = document.getElementById(`req-card-${requestId}`);
+        if (card) card.style.opacity = '0.5';
+
+        try {
+            console.log("Sending Assign:", { supervisorUid, requestUid, targetPgmId, requestId, role });
+            const res = await fetch('/api/supervisor/assign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ supervisorUid, requestUid, targetPgmId, requestId, role })
+            });
+            const d = await res.json();
+
+            if (d.success) {
+                if (card) card.remove();
+                const countEl = document.getElementById('reqCount');
+                if (countEl) countEl.innerText = Math.max(0, parseInt(countEl.innerText) - 1);
+                // alert('Aprovado com sucesso!');
+            } else {
+                alert("Erro ao aprovar: " + JSON.stringify(d.error));
+                if (card) card.style.opacity = '1';
+            }
+        } catch (e) {
+            alert("Erro de conexão ao aprovar: " + e.message);
+            if (card) card.style.opacity = '1';
+        }
+    }
+
+    async function rejectRequest(requestId) {
+        if (!confirm("Tem certeza que deseja EXCLUIR essa solicitação?")) return;
+
+        const card = document.getElementById(`req-card-${requestId}`);
+        if (card) card.style.opacity = '0.5';
 
         const supervisorUid = localStorage.getItem('userUid');
-        await fetch('/api/supervisor/assign', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ supervisorUid, requestUid, targetPgmId, requestId })
-        });
 
-        loadSupervisorData(supervisorUid); // Recarregar
+        try {
+            const res = await fetch('/api/supervisor/reject', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ supervisorUid, requestId })
+            });
+            const d = await res.json();
+
+            if (d.success) {
+                if (card) card.remove();
+                const countEl = document.getElementById('reqCount');
+                if (countEl) countEl.innerText = Math.max(0, parseInt(countEl.innerText) - 1);
+            } else {
+                alert("Erro ao excluir: " + (d.error || 'Erro desconhecido'));
+                if (card) card.style.opacity = '1';
+            }
+        } catch (e) {
+            alert("Erro ao excluir: " + e.message);
+            if (card) card.style.opacity = '1';
+        }
     }
+
+    // Assign to window to be safe
+    window.requestEntry = requestEntry;
+    window.assignMember = assignMember;
+    window.rejectRequest = rejectRequest;
+    window.loadSupervisorData = loadSupervisorData;
 </script>

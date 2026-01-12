@@ -39,9 +39,12 @@ router.post('/pgm/add', pgmController.addMember);
 router.post('/pgm/remove', pgmController.removeMember);
 router.post('/pgm/post', pgmController.addPost);
 router.post('/pgm/delete-post', pgmController.deletePost);
+router.post('/pgm/event/add', pgmController.addEvent);
+router.post('/pgm/event/delete', pgmController.deleteEvent);
 router.post('/api/pgm/request', pgmController.requestEntry);
 router.post('/api/supervisor/data', pgmController.getSupervisorData);
 router.post('/api/supervisor/assign', pgmController.assignMember);
+router.post('/api/supervisor/reject', pgmController.rejectRequest); // New Route
 router.post('/api/supervisor/promote', pgmController.promoteToLeader);
 router.post('/api/supervisor/demote', pgmController.demoteLeader);
 

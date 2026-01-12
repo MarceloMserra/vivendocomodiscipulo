@@ -9,16 +9,54 @@ exports.getMyPgm = async (req, res) => {
         const userDoc = await db.collection("users").doc(uid).get();
         if (!userDoc.exists) return res.json({ error: "Erro" });
         const u = userDoc.data();
-        const pgmId = u.pgmId || (u.role === 'lider' || u.role === 'admin' ? `pgm_${uid}` : null);
+
+        // If Leader, Admin OR SUPERVISOR, ensure they have their own PGM ID if not set
+        // Supervisors are also Leaders of their own group.
+
+        let pgmId = u.pgmId;
+        if (!pgmId && (u.role === 'lider' || u.role === 'admin' || u.role === 'supervisor')) {
+            pgmId = `pgm_${uid}`;
+            await db.collection("users").doc(uid).update({ pgmId });
+        }
+
+        // Supervisor can see the panel regardless of pgmId (logic above ensures they have one).
+
         if (!pgmId) return res.json({ isLeader: false, pgmId: null, role: u.role });
-        if ((u.role === 'lider' || u.role === 'admin') && !u.pgmId) await db.collection("users").doc(uid).update({ pgmId });
 
         const members = [];
         (await db.collection("users").where("pgmId", "==", pgmId).get()).forEach(d => members.push({ id: d.id, ...d.data() }));
         const posts = [];
         (await db.collection("pgm_posts").where("pgmId", "==", pgmId).orderBy("createdAt", "desc").get()).forEach(d => posts.push({ id: d.id, ...d.data() }));
 
-        return res.json({ isLeader: (u.role === 'lider' || u.role === 'admin'), pgmId, members, posts, role: u.role });
+        // Fetch Events
+        const events = [];
+        const now = admin.firestore.Timestamp.now();
+
+        // QUERY WITHOUT ORDERBY to avoid Missing Index Header error
+        const eventsSnap = await db.collection("pgm_events").where("pgmId", "==", pgmId).get();
+
+        eventsSnap.forEach(d => {
+            const data = d.data();
+            // Filter future events
+            if (data.date >= now) {
+                events.push({
+                    id: d.id,
+                    ...data,
+                    formattedDate: data.date.toDate().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+                    formattedTime: data.date.toDate().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                    weekday: data.date.toDate().toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').toUpperCase(),
+                    rawDate: data.date.toDate() // For sorting
+                });
+            }
+        });
+
+        // Sort in memory
+        events.sort((a, b) => a.rawDate - b.rawDate);
+
+        return res.json({
+            isLeader: (u.role === 'lider' || u.role === 'admin' || u.role === 'supervisor'),
+            pgmId, members, posts, events, role: u.role
+        });
     } catch (e) { res.json({ error: e.message }); }
 };
 
@@ -66,16 +104,51 @@ exports.deletePost = async (req, res) => {
     try { await db.collection("pgm_posts").doc(req.body.postId).delete(); res.redirect("/pgm"); } catch (e) { res.status(500).send(e.message); }
 };
 
+// --- AGENDA / CALENDAR ---
+
+exports.addEvent = async (req, res) => {
+    try {
+        const { pgmId, title, location, date, time } = req.body;
+        // Construct a Date object or store as string. Storing as ISO string or timestamp is better.
+        // Input `date` is YYYY-MM-DD, `time` is HH:MM
+        const eventDate = new Date(`${date}T${time}:00`);
+
+        await db.collection("pgm_events").add({
+            pgmId,
+            title,
+            location,
+            date: admin.firestore.Timestamp.fromDate(eventDate),
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        res.redirect("/pgm");
+    } catch (e) { res.status(500).send(e.message); }
+};
+
+exports.deleteEvent = async (req, res) => {
+    try { await db.collection("pgm_events").doc(req.body.eventId).delete(); res.redirect("/pgm"); } catch (e) { res.status(500).send(e.message); }
+};
+
 // --- NOVAS FUNÇÕES SUPERVISOR/SOLICITAÇÃO ---
 
 exports.requestEntry = async (req, res) => {
-    const { uid, name, whatsapp } = req.body;
+    const { uid, name, whatsapp, requestedLeader } = req.body;
     try {
         const existing = await db.collection("pgm_requests").where("uid", "==", uid).get();
         if (!existing.empty) return res.json({ success: true, message: "Já solicitado" });
 
+        // If requestedLeader not provided in body, try to find in user profile
+        let finalRequestedLeader = requestedLeader;
+
+        if (!finalRequestedLeader) {
+            const uDoc = await db.collection("users").doc(uid).get();
+            if (uDoc.exists && uDoc.data().requestedLeader) {
+                finalRequestedLeader = uDoc.data().requestedLeader;
+            }
+        }
+
         await db.collection("pgm_requests").add({
             uid, name, whatsapp,
+            requestedLeader: finalRequestedLeader || 'Não informado',
             status: 'pending',
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
@@ -90,8 +163,28 @@ exports.getSupervisorData = async (req, res) => {
         if (!userDoc.exists || userDoc.data().role !== 'supervisor') return res.status(403).json({ error: "Acesso negado" });
 
         // 1. Solicitações Pendentes
+        // 1. Solicitações Pendentes
         const requests = [];
-        (await db.collection("pgm_requests").orderBy("createdAt", "desc").get()).forEach(d => requests.push({ id: d.id, ...d.data() }));
+        const requestDocs = await db.collection("pgm_requests").orderBy("createdAt", "desc").get();
+
+        // Enrich requests with user profile data (to get requestedLeader if missing)
+        await Promise.all(requestDocs.docs.map(async (docSnap) => {
+            const r = docSnap.data();
+            let userParams = {};
+
+            // If leader name missing in request, check user profile
+            if (!r.requestedLeader || r.requestedLeader === 'Não informado') {
+                try {
+                    const uDoc = await db.collection("users").doc(r.uid).get();
+                    if (uDoc.exists) {
+                        const uData = uDoc.data();
+                        if (uData.requestedLeader) userParams.requestedLeader = uData.requestedLeader;
+                    }
+                } catch (err) { console.error("Error fetching user for request", r.uid, err); }
+            }
+
+            requests.push({ id: docSnap.id, ...r, ...userParams });
+        }));
 
         // 2. Todos os Líderes
         const leaders = [];
@@ -118,14 +211,51 @@ exports.getSupervisorData = async (req, res) => {
 };
 
 exports.assignMember = async (req, res) => {
-    const { supervisorUid, requestUid, targetPgmId, requestId } = req.body;
+    const { supervisorUid, requestUid, targetPgmId, requestId, role } = req.body;
+    console.log(`[ASSIGN] Request: Sup=${supervisorUid}, TargetUser=${requestUid}, PGM=${targetPgmId}, ReqID=${requestId}, Role=${role}`);
+
+    try {
+        const sup = await db.collection("users").doc(supervisorUid).get();
+        if (!sup.exists) return res.status(404).json({ error: "Supervisor não encontrado" });
+        if (sup.data().role !== 'supervisor') return res.status(403).json({ error: "Apenas supervisores podem aprovar" });
+
+        const updates = {
+            role: role || 'membro'
+        };
+
+        if (role === 'lider') {
+            // New Leader = New Group
+            updates.pgmId = `pgm_${requestUid}`;
+        } else {
+            // Member = Must have a group
+            if (!targetPgmId) return res.status(400).json({ error: "Para membros, escolha um grupo." });
+            updates.pgmId = targetPgmId;
+        }
+
+        // Update User
+        await db.collection("users").doc(requestUid).update(updates);
+        console.log(`[ASSIGN] User ${requestUid} updated to ${role}.`);
+
+        // Delete Request
+        if (requestId) {
+            await db.collection("pgm_requests").doc(requestId).delete();
+            console.log(`[ASSIGN] Request ${requestId} deleted.`);
+        }
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error("[ASSIGN ERROR]", e);
+        res.status(500).json({ error: e.message });
+    }
+};
+
+exports.rejectRequest = async (req, res) => {
+    const { supervisorUid, requestId } = req.body;
     try {
         const sup = await db.collection("users").doc(supervisorUid).get();
         if (sup.data().role !== 'supervisor') return res.status(403).json({ error: "Negado" });
 
-        await db.collection("users").doc(requestUid).update({ pgmId: targetPgmId });
-        if (requestId) await db.collection("pgm_requests").doc(requestId).delete();
-
+        await db.collection("pgm_requests").doc(requestId).delete();
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
 };
