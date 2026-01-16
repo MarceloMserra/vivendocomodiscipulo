@@ -1,0 +1,236 @@
+{
+type: uploaded file
+fileName: VCD_spec_antigravity_v3_unified.txt
+fullContent:
+VIVENDO COMO DISCÍPULO (VCD) — ESPECIFICAÇÃO TÉCNICA UNIFICADA (V3)
+Versão: 3.0 (Unified Architecture)
+Data: 16/01/2026
+Contexto: Fusão do App Atual (Node/Handlebars/AI-Content) + Nova Lógica de Rede (Antigravity V2)
+Stack Obrigatória: Node.js (Express) + Handlebars (SSR) + TailwindCSS + Firebase
+
+========================================================================================================================
+SUMÁRIO
+========================================================================================================================
+0) Visão Geral e Princípios
+1) Stack Tecnológica e Arquitetura (MVC Rigoroso)
+2) Design System (Golden Glassmorphism)
+3) Permissões e RBAC (Matriz Unificada)
+4) Modelo de Dados Firestore (Users, Groups, Network, Content)
+5) Módulo 1: Rede de Discipulado (Mapa, Vínculos, Relatórios)
+6) Módulo 2: Motor de Conteúdo IA (PDF -> GPT -> Feed)
+7) Back-end Express (Rotas, Controllers, Middlewares)
+8) Cálculos e Métricas (Relatórios Consolidados)
+9) Front-end Views (Handlebars Structure)
+10) Regras de Segurança e Performance
+11) Checklist de Migração e Testes
+
+========================================================================================================================
+0) VISÃO GERAL E PRINCÍPIOS
+========================================================================================================================
+Objetivo:
+O VCD é uma plataforma híbrida:
+1. Gestão Pastoral (PGM): Árvore de discipulado, presença rigorosa e métricas de saúde dos grupos.
+2. Edificação (Feed): Entrega de devocionais/notícias processados via IA a partir de PDFs semanais.
+
+Princípios Chave:
+- "Discipulador" = "LÍDER do PGM".
+- A navegação é Server-Side Rendered (SSR) rápida.
+- UX Mobile-First com estética Premium (Dourado/Vidro).
+- Dados consistentes: O vínculo (Member->Leader) alimenta automaticamente o Mapa e os Relatórios.
+
+========================================================================================================================
+1) STACK TECNOLÓGICA (NÃO INVENTAR MODA)
+========================================================================================================================
+Backend: Node.js com Express 4.x
+Frontend (View Engine): Handlebars.js (.hbs)
+CSS Framework: TailwindCSS (configurado via CDN ou PostCSS)
+Database: Firebase Firestore (NoSQL)
+Auth: Firebase Auth
+AI Core: OpenAI API (GPT-4o) para processamento de PDF.
+Libs Essenciais: `firebase-admin`, `pdf-parse` (ou similar), `express-session` (ou cookie-session).
+
+Arquitetura de Pastas (Sugestão Mandatória):
+/src
+  /controllers (Lógica de negócios e chamadas ao DB)
+  /routes      (Definição de endpoints)
+  /models      (Abstração do Firestore - ex: User.js, Group.js)
+  /services    (AI processing, PDF parsing)
+  /middleware  (Auth, RBAC, Validation)
+/views
+  /layouts     (main.hbs)
+  /partials    (header, footer, drawer)
+  /pages       (dashboard, pgm, content, admin)
+/public        (css, img, js clientside leve)
+
+========================================================================================================================
+2) DESIGN SYSTEM (GOLDEN GLASSMORPHISM)
+========================================================================================================================
+Estética (Mantendo a identidade atual):
+- Cores Primárias: Azul Marinho Profundo (Background/Header).
+- Destaque: Dourado (#d4af37) para títulos, ícones ativos, bordas de destaque.
+- Cards: Efeito "Vidro" (bg-white/10 backdrop-blur-md border-white/20).
+- Tipografia: Sans-serif moderna, espaçamento generoso para leitura.
+
+Componentes Padrão:
+- Botão Primário: Gradiente Dourado ou Azul Sólido com texto claro.
+- Botão Secundário: Outline Dourado.
+- Status Badge: Verde (Ativo), Vermelho (Inativo/Falta), Amarelo (Atenção).
+
+========================================================================================================================
+3) PERMISSÕES E RBAC
+========================================================================================================================
+Roles (Map Boolean no Firestore):
+- member: Acesso ao Feed e dados do próprio grupo.
+- leader: + Gestão do próprio grupo (Presença, Encontros).
+- supervisor: + Visão de todos os grupos, Drill-down (entrar na visão do líder).
+- admin: Acesso total + Configurações + Upload PDF.
+
+Exceção Crítica:
+- Supervisor que também lidera grupo:
+  - Pode ver TUDO (supervisor=true).
+  - Mas só edita presença/encontros onde `groups.leaderUid == user.uid`.
+
+========================================================================================================================
+4) MODELO DE DADOS FIRESTORE
+========================================================================================================================
+4.1 users/{uid}
+- uid, email, displayName, photoURL, phone
+- roles: { member: bool, leader: bool, supervisor: bool, admin: bool }
+- status: "active" | "inactive"
+- leaderUid: string | null (Quem discipula este usuário)
+- groupId: string | null (Em qual PGM ele está)
+- recentAttendance: array object (Cache para UI) -> [{date, present}, ...]
+- createdAt, updatedAt
+
+4.2 groups/{groupId}
+- name, leaderUid (obrigatório), supervisorUid (opcional)
+- active: bool
+- meetingDay, meetingTime, location
+- createdAt
+
+4.3 meetings/{meetingId} (meetingId = groupId_YYYY-MM-DD)
+- groupId, leaderUid
+- date (ISO YYYY-MM-DD)
+- attendanceCount: number
+- notes: string
+- status: "open" | "finalized"
+
+4.4 meetings/{meetingId}/attendance/{uid}
+- present: bool, markedAt
+
+4.5 contents/{contentId} (Novo Módulo AI)
+- title: string
+- type: "devotional" | "news" | "material"
+- date: ISO date
+- htmlContent: string (Gerado pelo GPT, formatado com classes Tailwind)
+- sourcePdf: string (URL opcional)
+- order: number (para ordenação no feed)
+
+4.6 discipleshipLinks/{linkId} (Histórico)
+- memberUid, leaderUid, groupId, startAt, endAt
+
+========================================================================================================================
+5) MÓDULO 1: REDE DE DISCIPULADO (CORE)
+========================================================================================================================
+Funcionalidades:
+A) Mapa da Rede (Visualização em Árvore)
+- Renderizar árvore baseada em `users.leaderUid`.
+- Supervisor vê seletor de líder para "trocar de visão".
+
+B) Gestão de Encontros (Meeting)
+- Líder cria encontro (Data). Sistema gera ID determinístico.
+- Lista de presença pré-populada com membros ativos do grupo.
+- Toggle simples (Presente/Ausente).
+- Salvar atualiza `meetings` (count) e `users.recentAttendance` (cache).
+
+C) Vínculo (Assign)
+- Admin/Supervisor atribui membro a líder+grupo.
+- Trigger/Service: Atualiza `users` e cria `discipleshipLinks`.
+
+========================================================================================================================
+6) MÓDULO 2: MOTOR DE CONTEÚDO IA (CORE ATUAL)
+========================================================================================================================
+Fluxo:
+1. Upload: Admin envia PDF na rota `/admin/content/upload`.
+2. Parse: Lib `pdf-parse` extrai texto bruto.
+3. Intelligence: Envia texto ao GPT-4o com System Prompt:
+   "Você é um editor cristão. Extraia 3 seções: Notícias, Devocional (com versículo e pergunta), Material. Formate a saída em JSON contendo HTML com classes Tailwind (text-justify, list-decimal-gold, etc)."
+4. Persistência: Salva no Firestore coleção `contents`.
+5. Exibição: Rota `/feed` renderiza os cards ordenados.
+
+UI de Leitura:
+- Modal/Página dedicada com fundo "vidro".
+- Botão "Marcar como Lido" (salva em subcoleção `users/{uid}/readHistory`).
+
+========================================================================================================================
+7) BACK-END EXPRESS & ROTAS (DEFINIÇÃO)
+========================================================================================================================
+Middleware de Auth:
+- `verifyFirebaseToken`: decodifica cookie de sessão, injeta `req.user` (com roles).
+
+Rotas de View (GET - Renderizam HBS):
+- `/` -> Login ou Dashboard (redirect).
+- `/dashboard` -> Feed de conteúdo + Resumo do meu grupo.
+- `/pgm/my-group` -> Visão do membro (quem é meu líder, agenda).
+- `/pgm/manage/:groupId` -> Painel do Líder (Chamada, Novo Encontro).
+- `/admin/map` -> Visualização da árvore.
+- `/admin/users` -> Lista geral e atribuição.
+- `/admin/upload` -> Tela de upload do PDF.
+
+Rotas de API (POST/PUT - JSON):
+- `POST /api/pgm/meeting` -> Cria encontro.
+- `PUT /api/pgm/attendance` -> Salva lista de presença (Batch write).
+- `POST /api/admin/assign` -> Vincula membro a líder.
+- `POST /api/admin/create-group` -> Cria novo PGM.
+- `POST /api/admin/create-user` -> Cria usuário manualmente.
+- `POST /api/content/process-pdf` -> Endpoint da IA.
+
+========================================================================================================================
+8) CÁLCULOS E MÉTRICAS
+========================================================================================================================
+Frequência:
+- Individual: % de presença nos últimos 4/8/12 encontros (usar `recentAttendance` para rapidez).
+- Grupo: Média de presença por encontro.
+
+Relatório Supervisor:
+- Tabela comparativa de grupos (Nome do Líder | Total Membros | Média Freq | Último Encontro).
+- Alerta visual para grupos sem encontro há > 14 dias.
+
+========================================================================================================================
+9) FRONT-END VIEWS (HANDLEBARS)
+========================================================================================================================
+Structure:
+- `main.hbs`: Importa Tailwind, Fontes, Scripts globais. Container principal.
+- `partials/navbar.hbs`: Menu responsivo (Hambúrguer no mobile).
+- `dashboard.hbs`:
+  - Section Top: "Boas vindas, [Nome]" + Versículo do dia.
+  - Section Mid: Cards do Feed (Notícias, Devocionais).
+  - Section Bot: Atalho para "Meu PGM" (se membro) ou "Gerir PGM" (se líder).
+- `manage_group.hbs`:
+  - Header com dados do grupo.
+  - Lista de Membros (Cards com Avatar).
+  - Botão Flutuante (FAB) "Novo Encontro".
+  - Lista de Encontros passados (Histórico).
+
+========================================================================================================================
+10) REGRAS DE SEGURANÇA E PERFORMANCE
+========================================================================================================================
+Segurança:
+- Validação SERVER-SIDE de permissões. Não confie apenas no `if` do Handlebars.
+- Proteção contra IDOR (Líder A não pode editar encontro do Grupo B).
+
+Performance:
+- Cache: Armazenar o HTML do conteúdo processado, não reprocessar PDF na leitura.
+- Indexes: Firestore composite indexes para consultas `groupId + date` e `leaderUid + active`.
+
+========================================================================================================================
+11) CHECKLIST DE "NÃO ERRE" (CRITÉRIOS DE ACEITE)
+========================================================================================================================
+1. O Feed deve continuar funcionando via IA (Upload PDF -> JSON -> HTML).
+2. O vínculo "Líder-Membro" deve ser rígido e alimentar a árvore.
+3. O Supervisor deve conseguir "entrar" na visão do Líder (Drill-down).
+4. A lista de chamada deve ser simples (Checkboxes) e salvar em lote.
+5. Manter a identidade visual Dourada/Vidro (Tailwind classes).
+6. Stack deve ser estritamente Node/Express/HBS.
+
+FIM DA ESPECIFICAÇÃO V3 UNIFICADA

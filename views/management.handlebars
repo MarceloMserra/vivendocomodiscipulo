@@ -39,73 +39,82 @@
         </div>
     </div>
 
-    <!-- CONTROLS -->
-    <div
-        class="glass-panel p-2 rounded-2xl mb-6 flex flex-col md:flex-row gap-2 sticky top-4 z-30 shadow-2xl backdrop-blur-xl border border-white/20">
-        <div class="relative flex-1">
-            <span class="absolute left-4 top-3.5 text-white/30">🔍</span>
-            <input type="text" id="searchInput" placeholder="Buscar por nome..."
-                class="w-full bg-black/40 text-white pl-10 pr-4 py-3 rounded-xl border border-white/5 text-sm outline-none focus:border-imbb-gold transition"
-                onkeyup="debounceSearch()">
-        </div>
-        <div class="flex gap-2">
-            <select id="roleFilter" onchange="resetAndLoad()"
-                class="bg-black/40 text-white px-4 py-3 rounded-xl border border-white/5 text-sm outline-none focus:border-imbb-gold cursor-pointer">
-                <option value="all">Todos os Cargos</option>
-                <option value="membro">Membros</option>
-                <option value="lider">Líderes</option>
-                <option value="supervisor">Supervisores</option>
-                <option value="admin">Admins</option>
-            </select>
+    <!-- GLOBAL ACTIONS -->
+    <div class="mt-6 flex justify-end px-2">
+        <a href="/rede/mapa"
+            class="bg-imbb-gold text-imdb-blue px-6 py-3 rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-yellow-400 transition shadow-lg flex items-center gap-2">
+            <span>🌳</span> Ver Mapa Global
+        </a>
+    </div>
+</div>
+
+<!-- CONTROLS -->
+<div
+    class="glass-panel p-2 rounded-2xl mb-6 flex flex-col md:flex-row gap-2 sticky top-4 z-30 shadow-2xl backdrop-blur-xl border border-white/20">
+    <div class="relative flex-1">
+        <span class="absolute left-4 top-3.5 text-white/30">🔍</span>
+        <input type="text" id="searchInput" placeholder="Buscar por nome..."
+            class="w-full bg-black/40 text-white pl-10 pr-4 py-3 rounded-xl border border-white/5 text-sm outline-none focus:border-imbb-gold transition"
+            onkeyup="debounceSearch()">
+    </div>
+    <div class="flex gap-2">
+        <select id="roleFilter" onchange="resetAndLoad()"
+            class="bg-black/40 text-white px-4 py-3 rounded-xl border border-white/5 text-sm outline-none focus:border-imbb-gold cursor-pointer">
+            <option value="all">Todos os Cargos</option>
+            <option value="membro">Membros</option>
+            <option value="lider">Líderes</option>
+            <option value="supervisor">Supervisores</option>
+            <option value="admin">Admins</option>
+        </select>
+    </div>
+</div>
+<!-- FILTER FEEDBACK -->
+<div id="activeFilterDisplay" class="hidden mb-4 flex items-center justify-between animate-fadeIn px-2">
+    <div class="flex items-center gap-3">
+        <button onclick="clearGroupFilter()"
+            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
+            title="Voltar">
+            ←
+        </button>
+        <div class="flex items-center gap-2">
+            <span class="text-yellow-500">👑</span>
+            <span class="text-white font-bold text-lg"><span id="filterGroupName">...</span></span>
         </div>
     </div>
-    <!-- FILTER FEEDBACK -->
-    <div id="activeFilterDisplay" class="hidden mb-4 flex items-center justify-between animate-fadeIn px-2">
-        <div class="flex items-center gap-3">
-            <button onclick="clearGroupFilter()"
-                class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
-                title="Voltar">
-                ←
-            </button>
-            <div class="flex items-center gap-2">
-                <span class="text-yellow-500">👑</span>
-                <span class="text-white font-bold text-lg"><span id="filterGroupName">...</span></span>
-            </div>
-        </div>
+</div>
+
+<!-- TABLE / LIST -->
+<div class="glass-panel rounded-[1.5rem] overflow-hidden min-h-[400px] relative border border-white/10">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-white/10 text-[10px] uppercase text-white/40 tracking-wider">
+                    <th class="p-4 font-bold">Nome / Cargo</th>
+                    <th class="p-4 font-bold">Liderança</th>
+                    <th class="p-4 font-bold text-right">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody" class="text-sm"></tbody>
+        </table>
     </div>
 
-    <!-- TABLE / LIST -->
-    <div class="glass-panel rounded-[1.5rem] overflow-hidden min-h-[400px] relative border border-white/10">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="border-b border-white/10 text-[10px] uppercase text-white/40 tracking-wider">
-                        <th class="p-4 font-bold">Nome / Cargo</th>
-                        <th class="p-4 font-bold">Liderança</th>
-                        <th class="p-4 font-bold text-right">Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="usersTableBody" class="text-sm"></tbody>
-            </table>
-        </div>
-
-        <!-- Loader / Empty State -->
-        <div id="tableLoader"
-            class="hidden absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-10">
-            <div class="w-8 h-8 border-2 border-imbb-gold border-t-transparent rounded-full animate-spin"></div>
-        </div>
-        <div id="emptyState" class="hidden py-20 text-center">
-            <p class="text-white/30 text-xs italic">Nenhum membro encontrado.</p>
-        </div>
-
-        <!-- Load More -->
-        <div class="p-4 text-center border-t border-white/5 hidden" id="loadMoreContainer">
-            <button onclick="loadUsers()"
-                class="text-xs font-bold text-white/50 hover:text-white uppercase tracking-wider py-2 px-4 hover:bg-white/5 rounded-lg transition">
-                Carregar Mais ▼
-            </button>
-        </div>
+    <!-- Loader / Empty State -->
+    <div id="tableLoader"
+        class="hidden absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-10">
+        <div class="w-8 h-8 border-2 border-imbb-gold border-t-transparent rounded-full animate-spin"></div>
     </div>
+    <div id="emptyState" class="hidden py-20 text-center">
+        <p class="text-white/30 text-xs italic">Nenhum membro encontrado.</p>
+    </div>
+
+    <!-- Load More -->
+    <div class="p-4 text-center border-t border-white/5 hidden" id="loadMoreContainer">
+        <button onclick="loadUsers()"
+            class="text-xs font-bold text-white/50 hover:text-white uppercase tracking-wider py-2 px-4 hover:bg-white/5 rounded-lg transition">
+            Carregar Mais ▼
+        </button>
+    </div>
+</div>
 
 </div>
 
@@ -192,8 +201,10 @@
         const sel = document.getElementById('modalPgmSelect');
         groupsCache.forEach(g => {
             const opt = document.createElement('option');
-            opt.value = g.pgmId;
-            opt.innerText = g.name;
+            opt.value = g.uid; // V3 UID
+            // Add icon based on type
+            const icon = g.type === 'Supervisor' ? '🛡️ ' : (g.type === 'Admin' ? '👑 ' : '👥 ');
+            opt.innerText = icon + g.name;
             sel.appendChild(opt);
         });
     }
@@ -323,7 +334,7 @@
                     <p class="text-xs text-white/50 font-bold">${u.leaderName || '-'}</p>
                 </td>
                 <td class="p-4 text-right">
-                    <button onclick="openEditModal('${u.uid}', '${u.name}', '${u.role}', '${u.pgmId}', '${u.photoUrl || ''}')" class="text-white/40 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-lg transition">⚙️</button>
+                    <button onclick="openEditModal('${u.uid}', '${u.name}', '${u.role}', '${u.leaderUid || ''}', '${u.photoUrl || ''}')" class="text-white/40 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-lg transition">⚙️</button>
                 </td>
             `;
                 tbody.appendChild(tr);
@@ -338,7 +349,7 @@
         document.getElementById('tableLoader').classList.add('hidden');
     }
 
-    function openEditModal(uid, name, role, pgmId, photoUrl) {
+    function openEditModal(uid, name, role, leaderUid, photoUrl) {
         document.getElementById('modalUid').value = uid;
         document.getElementById('modalName').innerText = name;
 
@@ -353,7 +364,8 @@
 
         selectedRole = role;
         updateModalRoleUI();
-        document.getElementById('modalPgmSelect').value = (pgmId && !pgmId.startsWith('pgm_')) ? pgmId : "";
+        // V3: Use leaderUid for selection
+        document.getElementById('modalPgmSelect').value = leaderUid || "";
         document.getElementById('editModal').classList.remove('hidden');
     }
 
@@ -392,7 +404,10 @@
                 body: JSON.stringify({
                     adminUid,
                     targetUid: uid,
-                    updates: { role: selectedRole, pgmId: selectedRole === 'lider' ? null : (pgmId || null) }
+                    updates: {
+                        role: selectedRole,
+                        leaderUid: selectedRole === 'lider' ? null : (pgmId || null)
+                    }
                 })
             });
             const d = await res.json();

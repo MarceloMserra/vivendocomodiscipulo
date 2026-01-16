@@ -3,10 +3,13 @@ const exphbs = require("express-handlebars");
 const path = require("path");
 require("dotenv").config();
 
+const cookieParser = require("cookie-parser");
+
 // 1. Initial Config
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // DEBUG MIDDLEWARE
 app.use((req, res, next) => {

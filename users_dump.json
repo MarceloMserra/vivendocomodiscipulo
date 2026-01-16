@@ -1,0 +1,107 @@
+[
+  {
+    "uid": "0XH0s5wdXDeb2LOSgwDaPFiskO03",
+    "email": "prmatheus@imbb.org.br"
+  },
+  {
+    "uid": "6bOa3njeynYH9FiLMusYXMJYC9N2",
+    "email": "sup2@teste.com"
+  },
+  {
+    "uid": "8KCTMBNJVjMepZ0UZ7Y4LF7MA6s2",
+    "displayName": "Líder João",
+    "email": "lider1@teste.com",
+    "roles": {
+      "leader": true,
+      "member": true
+    }
+  },
+  {
+    "uid": "ERrzIMixtsU1Frkt88vTFbiAkpA2",
+    "displayName": "Ovelha Maria",
+    "email": "membro7@teste.com",
+    "roles": {
+      "member": true
+    }
+  },
+  {
+    "uid": "Ffv50nGsYvaYWN9pdqH2DSOZfB93",
+    "email": "thiago@teste.com"
+  },
+  {
+    "uid": "Fp3vmWoR7FYoCIHzAPRDJXl0fNH3",
+    "email": "membro5@teste.com"
+  },
+  {
+    "uid": "Gq3vGfE0XrcduRkX522mCpr33Yo2",
+    "email": "membro10@teste.com"
+  },
+  {
+    "uid": "I7JamSEypZaHUKEda8ruPdRhQNb2",
+    "email": "membro1@teste.com"
+  },
+  {
+    "uid": "UfgtBF4lxwgg6XBvJQfhNHQPP5D3",
+    "email": "membro6@teste.com"
+  },
+  {
+    "uid": "WAkEF6MO10deu1vq4kZFU1GUG2x2",
+    "email": "membro2@teste.com"
+  },
+  {
+    "uid": "YaQu4o7Jykd15vwfW5U4Nzb1M7Y2",
+    "email": "membro3@teste.com"
+  },
+  {
+    "uid": "YwEBzerlIsa2kAQlSsHh4B27k103",
+    "email": "membro4@teste.com"
+  },
+  {
+    "uid": "ZhhIe5VwRXUIpIXIWZhSaOL4QaD2",
+    "email": "membro9@teste.com"
+  },
+  {
+    "uid": "admin_user_test",
+    "displayName": "Pastor Principal",
+    "roles": {
+      "admin": true
+    }
+  },
+  {
+    "uid": "dummy_supervisor_1",
+    "displayName": "Supervisor Dummy",
+    "roles": {
+      "supervisor": true
+    }
+  },
+  {
+    "uid": "hhKUBr5q3XNNxC0WwwrwJq4Nyol2",
+    "email": "membro8@teste.com"
+  },
+  {
+    "uid": "jQQYeYzt7wXcljyiTEdUC1N03Qk1",
+    "email": "alcineia@teste.com"
+  },
+  {
+    "uid": "nrfbUohhw1WWV9l5ZMXTHhK9mmC2",
+    "email": "mmdigital001@gmail.com"
+  },
+  {
+    "uid": "oIjqVflgkafjzrBiDeDLCj9EFDr2",
+    "email": "lider2@teste.com"
+  },
+  {
+    "uid": "ur9GjTD5yAgf29FuUpvnWvQZYEh1",
+    "displayName": "Supervisor Carlos",
+    "email": "sup1@teste.com",
+    "roles": {
+      "supervisor": true,
+      "member": true,
+      "admin": true
+    }
+  },
+  {
+    "uid": "x0Q3zJBzbPO03eCukz8qKbtaQoB2",
+    "email": "vitor@teste.com"
+  }
+]

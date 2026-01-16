@@ -43,6 +43,9 @@ router.post('/pgm/event/add', pgmController.addEvent);
 router.post('/pgm/event/delete', pgmController.deleteEvent);
 router.post('/api/pgm/request', pgmController.requestEntry);
 router.post('/api/supervisor/data', pgmController.getSupervisorData);
+router.post('/api/supervisor/metrics', pgmController.getSupervisorMetrics); // New Route
+router.get('/rede/mapa', pgmController.getNetworkMapPage); // Visual Map View
+router.post('/api/rede/tree', pgmController.getNetworkTreeAPI); // Visual Map Data
 router.post('/api/supervisor/assign', pgmController.assignMember);
 router.post('/api/supervisor/reject', pgmController.rejectRequest); // New Route
 router.post('/api/supervisor/promote', pgmController.promoteToLeader);

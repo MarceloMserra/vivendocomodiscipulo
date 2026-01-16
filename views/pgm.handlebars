@@ -7,9 +7,26 @@
 
     <!-- PAINEL SUPERVISOR -->
     <div id="supervisorPanel" class="hidden mb-10">
-        <div class="flex items-center gap-2 mb-4 px-2">
-            <div class="w-1 h-4 bg-red-400 rounded-full"></div>
-            <h3 class="font-bold text-white text-sm uppercase tracking-wide">Supervisão de Grupos</h3>
+        <div class="flex items-center gap-2 mb-4 px-2 justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-1 h-4 bg-red-400 rounded-full"></div>
+                <h3 class="font-bold text-white text-sm uppercase tracking-wide">Supervisão de Grupos</h3>
+            </div>
+            <a href="/rede/mapa"
+                class="text-[9px] font-bold text-imbb-gold border border-imbb-gold/30 px-2 py-1 rounded hover:bg-imbb-gold/10 transition flex items-center gap-1">
+                <span>🌳 Ver Mapa da Rede</span>
+            </a>
+        </div>
+
+        <!-- METRICS PANEL (V3 Module 1) -->
+        <div id="metricsPanel" class="hidden mb-6">
+            <h4 class="font-serif font-bold text-white text-lg mb-4 px-2">Saúde da Rede</h4>
+            <div id="metricsList" class="space-y-3">
+                <!-- Populated via JS -->
+                <div class="text-center py-4">
+                    <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white mx-auto"></div>
+                </div>
+            </div>
         </div>
 
         <div class="glass-panel p-6 rounded-[2rem] border border-white/20 relative overflow-hidden mb-6">
@@ -222,10 +239,11 @@
 
             if (!uid) { window.location.href = '/login'; return; }
 
-            // --- LÓGICA SUPERVISOR ---
-            if (userRole === 'supervisor') {
+            // --- LÓGICA SUPERVISOR (E ADMIN) ---
+            if (userRole === 'supervisor' || userRole === 'admin') {
                 document.getElementById('supervisorPanel').classList.remove('hidden');
                 loadSupervisorData(uid);
+                loadSupervisorMetrics(uid); // V3 Module 1 Call
             }
 
             const res = await fetch('/api/my-pgm', {
@@ -585,9 +603,60 @@
         }
     }
 
+    async function loadSupervisorMetrics(uid) {
+        document.getElementById('metricsPanel').classList.remove('hidden');
+        try {
+            const res = await fetch('/api/supervisor/metrics', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid })
+            });
+            const metrics = await res.json();
+            const list = document.getElementById('metricsList');
+
+            if (metrics.length === 0) {
+                list.innerHTML = '<p class="text-white/40 text-xs italic px-2">Nenhum grupo supervisionado.</p>';
+                return;
+            }
+
+            list.innerHTML = metrics.map(m => {
+                let badgeClass = "bg-green-500/20 text-green-300 border-green-500/30";
+                let statusText = "SAUDÁVEL";
+
+                if (m.status === 'critical') {
+                    badgeClass = "bg-red-500/20 text-red-300 border-red-500/30 animate-pulse";
+                    statusText = "CRÍTICO (>14 DIAS)";
+                } else if (m.status === 'warning') {
+                    badgeClass = "bg-yellow-500/20 text-yellow-300 border-yellow-500/30";
+                    statusText = "ATENÇÃO";
+                }
+
+                return `
+                <div class="glass-panel p-4 rounded-xl flex items-center justify-between border border-white/5 relative overflow-hidden">
+                    <div>
+                        <p class="font-bold text-white text-sm leading-tight">${m.groupName}</p>
+                        <p class="text-[10px] text-white/50 uppercase tracking-wider font-bold mb-1">Líder: ${m.leaderName}</p>
+                        <p class="text-[10px] text-white/40">Última reunião: ${m.daysInactive > 900 ? 'Nunca' : m.lastMeetingDate} (${m.daysInactive} dias atrás)</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="${badgeClass} border text-[9px] font-bold px-2 py-1 rounded uppercase tracking-wide block mb-1 text-center">
+                            ${statusText}
+                        </span>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+        } catch (e) {
+            console.error("Erro ao carregar métricas:", e);
+            document.getElementById('metricsList').innerHTML = '<p class="text-red-400 text-xs">Erro ao carregar dados.</p>';
+        }
+    }
+
     // Assign to window to be safe
     window.requestEntry = requestEntry;
     window.assignMember = assignMember;
     window.rejectRequest = rejectRequest;
     window.loadSupervisorData = loadSupervisorData;
+    window.loadSupervisorMetrics = loadSupervisorMetrics;
 </script>
