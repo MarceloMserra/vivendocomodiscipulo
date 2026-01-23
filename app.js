@@ -28,14 +28,19 @@ app.engine("handlebars", exphbs.engine({
   helpers: {
     eq: (a, b) => a === b,
     or: (a, b) => a || b,
-    json: (context) => JSON.stringify(context)
+    json: (context) => JSON.stringify(context),
+    initials: (name) => (name || "U").split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase(),
+    firstName: (name) => (name || "").split(' ')[0]
   }
 }));
 app.set("view engine", "handlebars");
 
 // 4. Routes
+// 4. Routes
 const routes = require('./src/routes/index');
+const meetingRoutes = require('./src/routes/meetingRoutes');
 app.use('/', routes);
+app.use('/monitoring', meetingRoutes);
 
 // 5. Start Server
 const PORT = 3000;

@@ -21,9 +21,19 @@ exports.getHomePage = async (req, res) => {
     } catch (e) { console.error(e); res.render("home", { data: null }); }
 };
 
+const User = require('../models/User'); // Import User Model
+
 exports.getLoginPage = (req, res) => res.render("login", { layout: "main" });
 exports.getRegisterPage = (req, res) => res.render("register", { layout: "main" });
-exports.getProfilePage = (req, res) => res.render("profile");
+
+exports.getProfilePage = async (req, res) => {
+    const uid = req.cookies.session || "";
+    // Ideally we verify the cookie token, but for now assuming direct mapping or check client side logic
+    // CLIENT SIDE is relying on localStorage usually, but for initial render, if we want server side hydration:
+
+    // Fallback: Render empty and let client populate OR require cookie
+    res.render("profile", { layout: "main" });
+};
 
 // Comment Actions (related to Home)
 exports.postComment = async (req, res) => {

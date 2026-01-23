@@ -128,6 +128,83 @@ exports.deleteEvent = async (req, res) => {
 
 // --- SUPERVISOR & REQUESTS ---
 
+// --- SUPERVISOR & REQUESTS ---
+
+// --- NEW MODULE: MEETING REPORTS ---
+
+exports.getReportPage = async (req, res) => {
+    // Expects query param ?pgmId=... (Or verify user leader status)
+    const { pgmId, uid } = req.query; // Assuming link passes /pgm/report?pgmId=X&uid=Y
+
+    try {
+        const group = await Group.findById(pgmId);
+        if (!group) return res.send("Grupo não encontrado");
+
+        // Fetch Members for Checklist
+        const members = await group.getMembers();
+
+        // Render
+        res.render("meeting_report", {
+            layout: 'main', // Or whatever valid layout
+            pgmId,
+            user: { uid },
+            members: members,
+            currentDate: new Date().toISOString().slice(0, 16), // datetime-local format
+            helpers: {
+                initials: (name) => (name || "Membro").split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase(),
+                roleBadge: (role) => (role === 'lider' || role === 'admin') ? 'Líder' : 'Membro'
+            }
+        });
+
+    } catch (e) { res.status(500).send(e.message); }
+};
+
+const UploadService = require('../services/uploadService'); // Import Service
+
+exports.submitReport = async (req, res) => {
+    try {
+        const { pgmId, leaderUid, type, date, feedback, attendees, visitors, photoBase64 } = req.body;
+
+        // Validation
+        if (!pgmId || !attendees) return res.status(400).json({ error: "Dados incompletos" });
+
+        // Handle Photo Upload (Storage)
+        let photoUrl = null;
+        if (photoBase64) {
+            // Upload to 'meetings' folder in Storage
+            photoUrl = await UploadService.uploadImage(photoBase64, 'meetings');
+        }
+
+        // Save Meeting
+        const meetingData = {
+            pgmId,
+            leaderUid,
+            type,
+            date: admin.firestore.Timestamp.fromDate(new Date(date)),
+            feedback,
+            attendees, // Array of UIDs
+            attCount: attendees.length, // Calculated
+            visitors: visitors || [],
+            visitorCount: visitors ? visitors.length : 0, // Calculated
+            photoUrl: photoUrl, // URL from Storage (or null)
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+
+        const docRef = await db.collection("meetings").add(meetingData);
+
+        // V3: Update 'lastMeetingDate' on PGM Group for health checks
+        await db.collection("pgms").doc(pgmId).update({
+            lastMeetingDate: meetingData.date
+        });
+
+        res.json({ success: true, id: docRef.id });
+
+    } catch (e) {
+        console.error("ERRO CRITICO AO ENVIAR RELATORIO:", e);
+        res.status(500).json({ error: e.message });
+    }
+};
+
 exports.requestEntry = async (req, res) => {
     const { uid, name, whatsapp, requestedLeader } = req.body;
     try {
@@ -149,21 +226,104 @@ exports.getSupervisorData = async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 };
 
-exports.getSupervisorMetrics = async (req, res) => {
-    const { uid } = req.body;
+exports.getGroupDetails = async (req, res) => {
+    const { uid, groupId } = req.body;
     try {
-        const data = await PGMService.getMetrics(uid);
+        const supervisor = await User.findById(uid);
+        if (!supervisor || (!supervisor.isSupervisor() && !supervisor.isAdmin())) return res.status(403).json({ error: "Negado" });
+
+        const data = await PGMService.getGroupDetailsForSupervisor(uid, groupId);
         res.json(data);
     } catch (e) { res.status(500).json({ error: e.message }); }
+};
+
+exports.getSupervisorMetrics = async (req, res) => {
+    const { uid } = req.body;
+    console.log(`[DEBUG] getSupervisorMetrics called with uid: "${uid}"`);
+    try {
+        const data = await PGMService.getMetrics(uid);
+        console.log(`[DEBUG] metrics returned: ${data ? data.length : 'null'} items`);
+        res.json(data);
+    } catch (e) {
+        console.error(`[DEBUG] Error in getMetrics: ${e.message}`);
+        res.status(500).json({ error: e.message });
+    }
 };
 
 // --- VISUAL TREE (V3 Module 1) ---
 exports.getNetworkMapPage = (req, res) => res.render("network_map", { layout: false }); // No layout for full screen map
 
+exports.getGalleryPage = async (req, res) => {
+    // Expects ?pgmId=... (fetched via frontend JS or localStorage)
+    // Actually, gallery page should probably be rendered for the user's group.
+    // Let's assume the frontend passes UID or we use the user's group.
+    // For simplicity, let's rely on the frontend passing ?pgmId like the report page.
+    // OR, we can fetch the user's group if pgmId is missing.
+
+    // For now, let's use the same pattern as Report: Client knows PGM ID.
+    // But since the button in PGM page just links to /pgm/gallery, we might need to fetch it here if not passed.
+
+    // Let's fetch using the Session/Auth logic (which we don't have fully middleware'd).
+    // WORKAROUND: The Gallery Button in PGM page will be dynamic too (JS) or we fetch the group of the logged-in user if not provided.
+
+    // Actually, the button I added was static: <a href="/pgm/gallery">.
+    // So this controller MUST find the user's PGM PGM.
+
+    // BUT wait, I don't have the UID in the GET request unless passed.
+    // The previous page (PGM) had the UID in localStorage and logic to show data.
+    // If I just open /pgm/gallery, I don't know who the user is on the server side (no cookie session).
+    // I NEED to pass params.
+
+    // Fix: I will update the Gallery Button in PGM.handlebars to be dynamic like the Report button? 
+    // OR faster: The gallery page itself is a skeleton that fetches data via API?
+    // Let's go with Server Side Rendering for simplicity if possible, but without session it is hard.
+
+    // HYBRID APPROACH: Render the skeleton, then client-side fetch the gallery data?
+    // User wants "Beautiful Gallery".
+    // Let's do: Render Page -> Page checks localStorage -> Page calls API to get Photos -> Renders Gallery.
+    // This avoids the "Link Generation" hell.
+
+    res.render("gallery", { layout: 'main' });
+};
+
+exports.getGalleryData = async (req, res) => {
+    const { pgmId } = req.body; // or query
+    if (!pgmId) return res.json({ error: "PGM ID missing" });
+
+    try {
+        const snap = await db.collection("meetings")
+            .where("pgmId", "==", pgmId)
+            // .orderBy("date", "desc") // requires index
+            .get();
+
+        const photos = [];
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (d.photoUrl) {
+                photos.push({
+                    id: doc.id,
+                    url: d.photoUrl, // Base64 or URL
+                    date: d.date.toDate(),
+                    formattedDate: d.date.toDate().toLocaleDateString('pt-BR'),
+                    type: d.type
+                });
+            }
+        });
+
+        // Manual Sort to avoid index error
+        photos.sort((a, b) => b.date - a.date);
+
+        res.json({ photos });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
+    }
+};
+
 exports.getNetworkTreeAPI = async (req, res) => {
     const { uid } = req.body;
     try {
-        const tree = await PGMService.getNetworkTree(uid);
+        const tree = await PGMService.getNetworkTreePGMBased(uid);
         res.json(tree);
     } catch (e) { res.status(500).json({ error: e.message }); }
 };

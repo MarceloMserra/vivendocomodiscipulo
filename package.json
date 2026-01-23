@@ -18,6 +18,8 @@
     "firebase-admin": "^13.6.0",
     "multer": "^2.0.2",
     "openai": "^6.15.0",
-    "pdf-extraction": "^1.0.2"
+    "pdf-extraction": "^1.0.2",
+    "uuid": "^13.0.0",
+    "xlsx": "^0.18.5"
   }
 }

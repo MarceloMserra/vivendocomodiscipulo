@@ -30,7 +30,8 @@ router.post('/api/gestao/update', managementController.updateUser);
 router.post('/api/gestao/groups', managementController.getGroupsList);
 
 // 3. API - User Profile
-router.post('/api/profile/update', uploadImage.single("photo"), userController.updateProfile);
+router.post('/api/profile/update', uploadImage.single("photo"), userController.updateProfile); // Legacy
+router.post('/api/profile/upload-photo', userController.uploadPhoto); // New Storage API
 router.post('/api/user-data', userController.getUserData);
 
 // 4. API - PGM
@@ -44,12 +45,19 @@ router.post('/pgm/event/delete', pgmController.deleteEvent);
 router.post('/api/pgm/request', pgmController.requestEntry);
 router.post('/api/supervisor/data', pgmController.getSupervisorData);
 router.post('/api/supervisor/metrics', pgmController.getSupervisorMetrics); // New Route
+router.post('/api/supervisor/group-details', pgmController.getGroupDetails); // V3 Supervisor Drill-Down
 router.get('/rede/mapa', pgmController.getNetworkMapPage); // Visual Map View
 router.post('/api/rede/tree', pgmController.getNetworkTreeAPI); // Visual Map Data
 router.post('/api/supervisor/assign', pgmController.assignMember);
 router.post('/api/supervisor/reject', pgmController.rejectRequest); // New Route
 router.post('/api/supervisor/promote', pgmController.promoteToLeader);
 router.post('/api/supervisor/demote', pgmController.demoteLeader);
+
+// 4.1 PGM Reports (V3 Module 2)
+router.get('/pgm/report', pgmController.getReportPage);
+router.post('/pgm/report/submit', pgmController.submitReport);
+router.get('/pgm/gallery', pgmController.getGalleryPage);
+router.post('/api/pgm/gallery-data', pgmController.getGalleryData);
 
 // 5. API - Comments
 router.post('/comentar', homeController.postComment);

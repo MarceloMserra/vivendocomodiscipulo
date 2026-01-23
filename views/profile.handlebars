@@ -1,124 +1,273 @@
-<div class="px-4 pb-20 animate-fade-in-down">
-    <div class="text-center mb-8">
-        <h2 class="text-2xl font-serif font-bold text-white">Meu Perfil</h2>
-        <p class="text-white/50 text-xs mt-1">Gerencie suas informações</p>
+<div class="px-2 pb-32 animate-fade-in-down">
+
+    <!-- HEADER -->
+    <div class="mb-8 flex items-center justify-between">
+        <a href="/"
+            class="text-white/50 hover:text-white transition flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
+            <span>←</span> Voltar
+        </a>
+        <h2 class="font-serif font-bold text-white text-xl">Meu Perfil</h2>
     </div>
 
-    <div class="flex flex-col items-center mb-8 relative">
-        <div class="relative group cursor-pointer" onclick="document.getElementById('photoInput').click()">
-            <div class="absolute inset-0 bg-imbb-gold/30 rounded-full blur-xl group-hover:bg-imbb-gold/50 transition"></div>
-            
-            <div id="profileImageDisplay" class="w-28 h-28 rounded-full glass-panel border-2 border-white/20 shadow-2xl flex items-center justify-center overflow-hidden relative z-10">
-                <span id="initialsDisplay" class="text-4xl font-serif font-bold text-white/50">?</span>
-                <img id="imgPreview" src="" class="w-full h-full object-cover hidden">
+    <!-- PROFILE CARD -->
+    <div class="glass-panel p-8 rounded-[2rem] border border-white/10 text-center relative overflow-hidden group">
+
+        <!-- Background Glow -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-32 bg-imbb-gold/10 blur-3xl pointer-events-none">
+        </div>
+
+        <!-- Avatar Upload -->
+        <div class="relative w-32 h-32 mx-auto mb-6">
+            <div id="profileAvatarContainer"
+                class="w-full h-full rounded-full border-4 border-white/10 overflow-hidden shadow-2xl relative">
+                {{#if user.photoUrl}}
+                <img src="{{user.photoUrl}}" id="currentAvatar" class="w-full h-full object-cover">
+                {{else}}
+                <div class="w-full h-full bg-white/5 flex items-center justify-center text-4xl font-bold text-white/20">
+                    {{initials user.name}}
+                </div>
+                {{/if}}
             </div>
-            
-            <div class="absolute bottom-0 right-0 bg-imbb-gold text-imbb-navy p-2.5 rounded-full border-2 border-imbb-navy shadow-lg z-20 group-hover:scale-110 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+
+            <button onclick="document.getElementById('avatarInput').click()"
+                class="absolute bottom-0 right-0 bg-imbb-gold text-imbb-navy w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition border-2 border-[#0A1635]">
+                📷
+            </button>
+            <input type="file" id="avatarInput" accept="image/*" class="hidden" onchange="uploadAvatar(this)">
+        </div>
+
+        <h3 id="profileName" class="text-2xl font-bold text-white mb-1">{{user.name}}</h3>
+        <p id="profileRole" class="text-xs text-imbb-gold uppercase tracking-widest font-bold mb-6">{{user.role}}</p>
+
+        <!-- Stats Grid (Placeholder Removed) -->
+        <!-- 
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <div class="bg-black/20 p-4 rounded-2xl border border-white/5">
+                <span class="block text-2xl font-bold text-white">0</span>
+                <span class="text-[10px] text-white/40 uppercase tracking-wider">Encontros</span>
+            </div>
+            <div class="bg-black/20 p-4 rounded-2xl border border-white/5">
+                <span class="block text-2xl font-bold text-white">-</span>
+                <span class="text-[10px] text-white/40 uppercase tracking-wider">Frequência</span>
             </div>
         </div>
-        <p class="text-[10px] text-white/40 mt-3 uppercase tracking-wide">Toque para alterar</p>
-    </div>
+        -->
 
-    <form id="profileForm" class="space-y-5">
-        <input type="file" id="photoInput" name="photo" accept="image/*" class="hidden" onchange="previewImage(event)">
-        <input type="hidden" id="uid" name="uid">
+        <!-- Edit Form -->
+        <form action="/api/profile/update-data" method="POST" class="text-left space-y-4">
+            <div>
+                <label class="text-[10px] uppercase font-bold text-white/40 ml-1 mb-1 block">E-mail</label>
+                <input type="email" id="profileEmail" value="{{user.email}}" disabled
+                    class="w-full text-sm p-4 bg-black/40 border border-white/5 rounded-xl text-white/50 cursor-not-allowed">
+            </div>
 
-        <div>
-            <label class="block text-[10px] font-bold text-white/60 uppercase mb-2 ml-1">Nome Completo</label>
-            <input type="text" id="name" name="name" class="w-full p-4 rounded-xl bg-black/20 border border-white/10 text-white font-semibold outline-none focus:border-imbb-gold transition">
+            <div>
+                <label class="text-[10px] uppercase font-bold text-white/40 ml-1 mb-1 block">Telefone / WhatsApp</label>
+                <input type="tel" id="profileWhatsapp" name="whatsapp" value="{{user.whatsapp}}"
+                    class="w-full text-sm p-4 bg-black/40 border border-white/10 rounded-xl outline-none focus:border-imbb-gold text-white">
+            </div>
+
+            <button type="submit"
+                class="w-full bg-white/10 text-white font-bold py-4 rounded-xl hover:bg-white/20 transition uppercase text-xs tracking-widest mt-4">
+                Salvar Dados
+            </button>
+        </form>
+
+        <!-- PASSWORD CHANGE SECTION -->
+        <div class="mt-8 pt-6 border-t border-white/5 text-left space-y-4">
+            <h4 class="text-white font-bold text-sm mb-4">Alterar Senha</h4>
+
+            <div>
+                <label class="text-[10px] uppercase font-bold text-white/40 ml-1 mb-1 block">Nova Senha</label>
+                <input type="password" id="newPassword" placeholder="Mínimo 6 caracteres"
+                    class="w-full text-sm p-4 bg-black/40 border border-white/10 rounded-xl outline-none focus:border-imbb-gold text-white">
+            </div>
+
+            <button onclick="changePassword()" id="btnChangePass"
+                class="w-full bg-imbb-gold/10 text-imbb-gold border border-imbb-gold/50 font-bold py-3 rounded-xl hover:bg-imbb-gold hover:text-imbb-navy transition uppercase text-xs tracking-widest">
+                Atualizar Senha
+            </button>
         </div>
 
-        <div>
-            <label class="block text-[10px] font-bold text-white/60 uppercase mb-2 ml-1">WhatsApp</label>
-            <input type="tel" id="whatsapp" name="whatsapp" class="w-full p-4 rounded-xl bg-black/20 border border-white/10 text-white outline-none focus:border-imbb-gold transition">
+        <div class="mt-8 pt-6 border-t border-white/5">
+            <button onclick="logout()"
+                class="text-red-400 text-xs font-bold uppercase tracking-widest hover:text-red-300">
+                Sair da Conta
+            </button>
         </div>
-
-        <div>
-            <label class="block text-[10px] font-bold text-white/60 uppercase mb-2 ml-1">E-mail (Login)</label>
-            <input type="email" id="email" name="email" readonly class="w-full p-4 rounded-xl bg-white/5 border border-white/5 text-white/40 cursor-not-allowed">
-        </div>
-
-        <button type="submit" class="w-full bg-imbb-gold text-imbb-navy py-4 rounded-xl font-bold shadow-lg mt-8 hover:brightness-110 transition uppercase text-xs tracking-wider">
-            Salvar Alterações
-        </button>
-    </form>
-
-    <div class="mt-10 pt-8 border-t border-white/10">
-        <button onclick="logout()" class="w-full text-red-300 font-bold text-xs py-3 border border-red-500/30 rounded-xl hover:bg-red-500/10 transition uppercase tracking-wide">
-            Sair da Conta
-        </button>
     </div>
 </div>
 
-<script>
-    function previewImage(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.getElementById('imgPreview');
-                img.src = e.target.result;
-                img.classList.remove('hidden');
-                document.getElementById('initialsDisplay').classList.add('hidden');
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCTB6wkVIfnwx009A67bv8Ar58YpD-59Z8",
+        authDomain: "vivendo-como-discipulo.firebaseapp.com",
+        projectId: "vivendo-como-discipulo",
+        storageBucket: "vivendo-como-discipulo.firebasestorage.app",
+        messagingSenderId: "1086407430526",
+        appId: "1:1086407430526:web:d57784df6283c51729a32f",
+        measurementId: "G-5JV8QRSMXQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    async function loadProfileData() {
+        const uid = localStorage.getItem('userUid');
+        if (!uid) return;
+
+        try {
+            const response = await fetch('/api/user-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid })
+            });
+            const data = await response.json();
+
+            if (data.name) {
+                // Update Name
+                const nameEl = document.getElementById('profileName');
+                if (nameEl) nameEl.innerText = data.name;
+
+                // Update Role
+                const roleEl = document.getElementById('profileRole');
+                const roleName = data.roles?.leader ? 'Líder' : (data.roles?.supervisor ? 'Supervisor' : 'Membro');
+                if (roleEl) roleEl.innerText = roleName;
+
+                // Update Inputs
+                const emailInput = document.getElementById('profileEmail');
+                if (emailInput) emailInput.value = data.email || '';
+
+                const telInput = document.getElementById('profileWhatsapp');
+                if (telInput) telInput.value = data.whatsapp || '';
+
+                // Update Avatar
+                const avatarContainer = document.getElementById('profileAvatarContainer');
+                if (avatarContainer) {
+                    if (data.photoUrl) {
+                        avatarContainer.innerHTML = `<img src="${data.photoUrl}" id="currentAvatar" class="w-full h-full object-cover">`;
+                    } else {
+                        // Generate Initials
+                        const nameToUse = data.displayName || data.name || "U";
+                        const initials = nameToUse.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+                        avatarContainer.innerHTML = `
+                            <div class="w-full h-full bg-white/5 flex items-center justify-center text-4xl font-bold text-white/20">
+                                ${initials}
+                            </div>`;
+                    }
+                }
             }
-            reader.readAsDataURL(file);
+        } catch (e) {
+            console.error("Error loading profile:", e);
+        }
+    }
+    loadProfileData();
+
+    window.changePassword = async function () {
+        const newPass = document.getElementById('newPassword').value;
+        if (!newPass || newPass.length < 6) {
+            alert("A senha deve ter no mínimo 6 caracteres.");
+            return;
+        }
+
+        const btn = document.getElementById('btnChangePass');
+        const oldText = btn.innerText;
+        btn.innerText = "Atualizando...";
+        btn.disabled = true;
+
+        try {
+            const user = auth.currentUser;
+            if (!user) {
+                alert("Você precisa estar logado novamente para alterar a senha (segurança). Saia e entre novamente.");
+                return;
+            }
+
+            await updatePassword(user, newPass);
+            alert("Senha alterada com sucesso! Use a nova senha no próximo login.");
+            document.getElementById('newPassword').value = "";
+        } catch (error) {
+            console.error(error);
+            if (error.code === 'auth/requires-recent-login') {
+                alert("Por motivos de segurança, faça logout e login novamente antes de alterar a senha.");
+            } else {
+                alert("Erro ao alterar senha: " + error.message);
+            }
+        } finally {
+            btn.innerText = oldText;
+            btn.disabled = false;
         }
     }
 
-    document.addEventListener('DOMContentLoaded', async () => {
-        const uid = localStorage.getItem('userUid');
-        if(!uid) { window.location.href = '/login'; return; }
-
-        document.getElementById('uid').value = uid;
-
-        const res = await fetch('/api/user-data', {
-            method: 'POST', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ uid })
-        });
-        const user = await res.json();
-
-        document.getElementById('name').value = user.name || '';
-        document.getElementById('whatsapp').value = user.whatsapp || '';
-        document.getElementById('email').value = user.email || '';
-
-        if(user.photoUrl) {
-            const img = document.getElementById('imgPreview');
-            img.src = user.photoUrl;
-            img.classList.remove('hidden');
-            document.getElementById('initialsDisplay').classList.add('hidden');
-        } else {
-            const initials = (user.name || 'U').charAt(0).toUpperCase();
-            document.getElementById('initialsDisplay').innerText = initials;
+    // Expose other functions to window since module scope is private
+    window.logout = function () {
+        if (confirm("Deseja sair?")) {
+            localStorage.clear();
+            auth.signOut().then(() => window.location.href = '/login');
         }
-    });
+    }
 
-    document.getElementById('profileForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = e.target.querySelector('button[type="submit"]');
-        btn.innerText = "SALVANDO...";
-        
-        const formData = new FormData(e.target);
+    window.uploadAvatar = uploadAvatar;
+
+    function compressImage(file, maxWidth, quality) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = event => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const elem = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                    elem.width = width;
+                    elem.height = height;
+                    const ctx = elem.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(elem.toDataURL('image/jpeg', quality));
+                };
+            };
+        });
+    }
+
+    async function uploadAvatar(input) {
+        if (!input.files || !input.files[0]) return;
+
+        const file = input.files[0];
+        const btn = input.previousElementSibling;
+        const originalIcon = btn.innerHTML;
+        btn.innerHTML = "⏳";
+        btn.disabled = true;
 
         try {
-            const res = await fetch('/api/profile/update', {
-                method: 'POST',
-                body: formData 
-            });
-            const result = await res.json();
+            const base64 = await compressImage(file, 400, 0.8);
 
-            if(result.success) {
-                localStorage.setItem('userName', document.getElementById('name').value);
-                alert("Perfil atualizado!");
-                window.location.reload();
+            // Get UID from Server Injection OR LocalStorage as backup
+            let uid = "{{user.uid}}";
+            if (!uid) uid = localStorage.getItem('userUid'); // Fallback
+
+            const res = await fetch('/api/profile/upload-photo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid, photoBase64: base64 })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                // Update UI immediately
+                location.reload();
             } else {
-                alert("Erro ao salvar.");
+                alert("Erro: " + data.error);
             }
-        } catch(err) {
-            console.error(err);
-            alert("Erro técnico.");
+        } catch (e) {
+            alert("Erro no upload");
+            console.error(e);
         } finally {
-            btn.innerText = "SALVAR ALTERAÇÕES";
+            btn.innerHTML = originalIcon;
+            btn.disabled = false;
         }
-    });
+    }
 </script>

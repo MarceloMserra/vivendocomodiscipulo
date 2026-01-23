@@ -123,6 +123,26 @@
                     <span class="text-white/50 text-xl group-hover:text-white transition">+</span>
                 </button>
 
+                <a id="btnReportLink" href="#"
+                    class="w-full p-4 flex justify-between items-center hover:bg-white/5 transition group border-t border-white/5 pointer-events-none opacity-50">
+                    <span class="font-bold text-white text-sm flex items-center gap-2">
+                        <span
+                            class="bg-imbb-gold text-imbb-navy w-6 h-6 rounded flex items-center justify-center text-xs">📝</span>
+                        Novo Relatório
+                    </span>
+                    <span class="text-white/50 text-xl group-hover:text-white transition">→</span>
+                </a>
+
+                <a href="/pgm/gallery"
+                    class="w-full p-4 flex justify-between items-center hover:bg-white/5 transition group border-t border-white/5">
+                    <span class="font-bold text-white text-sm flex items-center gap-2">
+                        <span
+                            class="bg-imbb-gold text-imbb-navy w-6 h-6 rounded flex items-center justify-center text-xs">📷</span>
+                        Galeria de Fotos
+                    </span>
+                    <span class="text-white/50 text-xl group-hover:text-white transition">→</span>
+                </a>
+
                 <div id="postForm" class="hidden p-5 bg-black/20 border-t border-white/5">
                     <form action="/pgm/post" method="POST" class="space-y-4">
                         <input type="hidden" name="pgmId" id="formPgmId">
@@ -237,7 +257,11 @@
             const userName = localStorage.getItem('userName');
             const userRole = localStorage.getItem('userRole');
 
-            if (!uid) { window.location.href = '/login'; return; }
+            if (!uid) {
+                alert("DEBUG: UID não encontrado no LocalStorage! O login falhou em salvar seus dados. Tente limpar o cache do navegador.");
+                window.location.href = '/login';
+                return;
+            }
 
             // --- LÓGICA SUPERVISOR (E ADMIN) ---
             if (userRole === 'supervisor' || userRole === 'admin') {
@@ -256,19 +280,11 @@
             document.getElementById('pgmLoader').classList.add('hidden');
 
             if (!data.pgmId) {
-                // If User is Supervisor, DO NOT show "No Group" panel as default state, 
-                // because they have the Supervisor Panel. Unless they really want to join one?
-                // The user requested: "Supervisors also have groups". 
-                // So if they don't have one, showing "You don't have a PGM" is actually correct, 
-                // BUT it might be cluttering the view if they are just working.
-                // Let's keep it but maybe style it differently? 
-                // Or just ensure Supervisor Panel is top priority.
-
-                // If Supervisor, we refrain from showing the big "NO PGM" screen if they are in "Work Mode"?
-                // Whatever, user said "Aparece dizendo você ainda não tem um PGM".
-                // We will let it show, but ensure Supervisor Panel is visible ABOVE it. (It already is).
-
-                document.getElementById('noGroupPanel').classList.remove('hidden');
+                // Se for Supervisor/Admin, NÃO mostra o painel de "Sem Grupo" para não poluir
+                // Pq eles já tem o painel principal
+                if (userRole !== 'supervisor' && userRole !== 'admin') {
+                    document.getElementById('noGroupPanel').classList.remove('hidden');
+                }
             } else {
                 document.getElementById('groupContent').classList.remove('hidden');
 
@@ -383,6 +399,14 @@
                 const isLeader = data.isLeader;
                 const currentUid = uid;
 
+                // --- DYNAMIC REPORT LINK ---
+                // Since pgmId is only known here on client-side, we update the link
+                const btnReport = document.getElementById('btnReportLink');
+                if (btnReport && data.pgmId) {
+                    btnReport.href = `/pgm/report?pgmId=${data.pgmId}&uid=${uid}`; // Added UID payload too for safety
+                    btnReport.classList.remove('pointer-events-none', 'opacity-50');
+                }
+
                 // Header with Manage Button if Leader
                 const membersHeader = document.getElementById('membersHeaderWrapper');
                 if (isLeader && membersHeader && !document.getElementById('btnManageMembers')) {
@@ -400,19 +424,24 @@
                     const isMe = m.id === currentUid;
                     const isMemberLeader = m.role === 'lider' || m.role === 'admin' || m.role === 'supervisor'; // Heuristic for role display
 
-                    // Initials
-                    const initials = m.name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+                    // Initials (Safeguard)
+                    const safeName = m.name || "Membro";
+                    const initials = safeName.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+
+                    const avatarHtml = m.photoUrl
+                        ? `<img src="${m.photoUrl}" class="w-full h-full rounded-full object-cover">`
+                        : `${initials}`;
 
                     return `
                 <div class="glass-panel p-3 rounded-xl flex items-center justify-between border border-white/5 relative overflow-hidden group">
                      <!-- Left: Avatar & Info -->
                      <div class="flex items-center gap-3 relative z-10 w-full">
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-white/10 to-white/5 flex items-center justify-center text-xs font-bold text-white border border-white/10 shadow-inner">
-                            ${initials}
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-white/10 to-white/5 flex items-center justify-center text-xs font-bold text-white border border-white/10 shadow-inner overflow-hidden">
+                            ${avatarHtml}
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-bold text-white truncate flex items-center gap-2">
-                                ${m.name}
+                                ${safeName}
                                 ${isMe ? '<span class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded text-white/50">Você</span>' : ''}
                             </p>
                             <p class="text-[10px] text-white/40 uppercase tracking-wider font-bold">
@@ -424,7 +453,7 @@
                      <!-- Delete Action (Hidden by default, toggled via JS class) -->
                      ${isLeader && !isMe ? `
                      <div class="member-action hidden transition-all duration-300 ml-3">
-                        <form action="/pgm/remove" method="POST" onsubmit="return confirm('Remover ${m.name}?')">
+                        <form action="/pgm/remove" method="POST" onsubmit="return confirm('Remover ${safeName}?')">
                              <input type="hidden" name="memberId" value="${m.id}">
                              <button class="bg-red-500/20 hover:bg-red-500 text-red-200 hover:text-white w-9 h-9 rounded-full flex items-center justify-center border border-red-500/30 transition shadow-lg">
                                 ✕
@@ -632,16 +661,25 @@
                 }
 
                 return `
-                <div class="glass-panel p-4 rounded-xl flex items-center justify-between border border-white/5 relative overflow-hidden">
-                    <div>
-                        <p class="font-bold text-white text-sm leading-tight">${m.groupName}</p>
-                        <p class="text-[10px] text-white/50 uppercase tracking-wider font-bold mb-1">Líder: ${m.leaderName}</p>
-                        <p class="text-[10px] text-white/40">Última reunião: ${m.daysInactive > 900 ? 'Nunca' : m.lastMeetingDate} (${m.daysInactive} dias atrás)</p>
+                <div class="glass-panel p-4 rounded-xl flex items-center justify-between border border-white/5 relative overflow-hidden group hover:bg-white/5 transition">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                             <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-bold text-xs text-imbb-gold border border-white/10">
+                                ${m.leaderName.charAt(0)}
+                             </div>
+                             <div>
+                                <p class="font-bold text-white text-sm leading-tight">${m.groupName}</p>
+                                <p class="text-[10px] text-white/50 uppercase tracking-wider font-bold">Líder: ${m.leaderName}</p>
+                             </div>
+                        </div>
+                        <p class="text-[10px] text-white/40 ml-10">Última reunião: ${m.daysInactive > 900 ? 'Nunca' : m.lastMeetingDate} (${m.daysInactive} dias atrás)</p>
                     </div>
-                    <div class="text-right">
-                        <span class="${badgeClass} border text-[9px] font-bold px-2 py-1 rounded uppercase tracking-wide block mb-1 text-center">
+                    <div class="text-right flex flex-col items-end gap-1">
+                        <span class="${badgeClass} border text-[9px] font-bold px-2 py-1 rounded uppercase tracking-wide block text-center min-w-[80px]">
                             ${statusText}
                         </span>
+                        <!-- Future: Drill down button -->
+                        <button onclick="openGroupDetails('${m.groupName}', '${m.leaderName}', '${m.groupId}')" class="text-[10px] text-white/30 hover:text-white transition uppercase font-bold">Ver Detalhes →</button>
                     </div>
                 </div>
                 `;
@@ -653,10 +691,75 @@
         }
     }
 
+    // --- MODAL DETAILS LOGIC ---
+    async function openGroupDetails(groupName, leaderName, groupId) {
+        document.getElementById('modalGroupName').innerText = groupName;
+        document.getElementById('modalLeaderName').innerText = "Líder: " + leaderName;
+        document.getElementById('modalMembersList').innerHTML = '<p class="text-white/30 text-xs italic">Carregando...</p>';
+        document.getElementById('groupDetailsModal').classList.remove('hidden');
+
+        try {
+            const uid = localStorage.getItem('userUid');
+            const res = await fetch('/api/supervisor/group-details', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid, groupId })
+            });
+            const data = await res.json();
+
+            if (data.members && data.members.length > 0) {
+                document.getElementById('modalMembersList').innerHTML = data.members.map(mem => `
+                    <div class="flex items-center gap-3 p-2 bg-white/5 rounded-lg border border-white/5">
+                        <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-imbb-gold overflow-hidden">
+                             ${mem.photoUrl ? `<img src="${mem.photoUrl}" class="w-full h-full object-cover">` : mem.name.charAt(0)}
+                        </div>
+                        <div>
+                            <p class="text-white text-xs font-bold leading-tight">${mem.name}</p>
+                            <p class="text-[10px] text-white/40 uppercase">${mem.role || 'Membro'}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                document.getElementById('modalMembersList').innerHTML = '<p class="text-white/30 text-xs italic">Nenhum membro encontrado.</p>';
+            }
+
+        } catch (e) {
+            document.getElementById('modalMembersList').innerHTML = '<p class="text-red-400 text-xs">Erro ao carregar.</p>';
+        }
+    }
+
     // Assign to window to be safe
     window.requestEntry = requestEntry;
     window.assignMember = assignMember;
     window.rejectRequest = rejectRequest;
     window.loadSupervisorData = loadSupervisorData;
     window.loadSupervisorMetrics = loadSupervisorMetrics;
+    window.openGroupDetails = openGroupDetails;
 </script>
+
+<!-- GROUP DETAILS MODAL (SUPERVISOR) -->
+<div id="groupDetailsModal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn">
+    <div
+        class="glass-panel w-full max-w-md rounded-2xl p-6 relative border border-white/20 shadow-2xl flex flex-col max-h-[90vh]">
+        <button onclick="document.getElementById('groupDetailsModal').classList.add('hidden')"
+            class="absolute top-4 right-4 text-white/30 hover:text-white transition">✕</button>
+
+        <h3 class="text-xl font-serif font-bold text-white mb-1" id="modalGroupName">Nome do Grupo</h3>
+        <p class="text-xs text-white/50 uppercase tracking-widest font-bold mb-6" id="modalLeaderName">Líder: Nome</p>
+
+        <div class="overflow-y-auto pr-2 space-y-4">
+            <div>
+                <h4 class="text-xs font-bold text-white/40 uppercase mb-2">Membros</h4>
+                <div id="modalMembersList" class="space-y-2">
+                    <p class="text-white/30 text-xs italic">Carregando...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-white/10 flex gap-2">
+            <button onclick="document.getElementById('groupDetailsModal').classList.add('hidden')"
+                class="flex-1 bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-bold text-xs uppercase transition">Fechar</button>
+        </div>
+    </div>
+</div>

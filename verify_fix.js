@@ -1,34 +1,35 @@
-const { db } = require('./src/config/firebase');
+const { admin, db } = require('./src/config/firebase');
 
-async function verifyFix() {
-    console.log("--- VERIFYING CONTROLLER LOGIC FIX ---");
+async function verify() {
+    console.log("🕵️ Verifying Fix...");
 
-    // 1. SIMULATE "ALL USERS" QUERY (No Filter)
-    // Old Controller used .orderBy("name")
-    // New Controller uses .orderBy("displayName")
+    // 1. Check Arthur
+    const arthur = await db.collection('users').doc('gbDQgqS4iih2ZQPB4awCI2xTglJ2').get(); // Real Arthur
+    console.log(`Arthur (Real): ${arthur.exists ? '✅ Found' : '❌ MISSING'} | Roles: ${JSON.stringify(arthur.data().roles)}`);
 
-    console.log("\n[1] Testing 'All Users' Query (orderBy displayName):");
-    try {
-        const snapshot = await db.collection("users").orderBy("displayName").get();
-        console.log(`   ✅ Found ${snapshot.size} users.`);
+    // 2. Check PGM
+    const pgm = await db.collection('pgms').doc('Vu2XaFHC5LC2SvDRBoSF').get(); // Real PGM
+    console.log(`PGM (Real): ${pgm.exists ? '✅ Found' : '❌ MISSING'} | Leader: ${pgm.data().leaderUid}`);
 
-        const names = snapshot.docs.map(d => d.data().displayName);
-        console.log(`   First 3: ${names.slice(0, 3).join(", ")}`);
-
-        // Check for Matheus Maemo specifically to see why he appeared before
-        const matheus = snapshot.docs.find(d => d.data().name === "Matheus Maemo" || d.data().displayName === "Matheus Maemo");
-        if (matheus) console.log(`   (Matheus found at UID: ${matheus.id})`);
-
-    } catch (e) {
-        console.error("   ❌ Query Failed:", e.message);
+    // 3. Check Members
+    const membersToCheck = ["Bruno", "Raphael", "Phelipe", "Marcelo Serra"];
+    for (const name of membersToCheck) {
+        // Search by strict name or display name
+        const snap = await db.collection('users').where('displayName', '==', name).get();
+        if (snap.empty) {
+            // Try strict 'name'
+            const snap2 = await db.collection('users').where('name', '==', name).get();
+            if (snap2.empty) console.log(`❌ Member '${name}' NOT FOUND`);
+            else printMember(snap2.docs[0]);
+        } else {
+            printMember(snap.docs[0]);
+        }
     }
-
-    // 2. SIMULATE "LEADERS" FILTER (V3 Role)
-    console.log("\n[2] Testing 'Leaders' Filter (roles.leader == true):");
-    const leaders = await db.collection("users").where("roles.leader", "==", true).get();
-    console.log(`   ✅ Found ${leaders.size} Leaders.`);
-    leaders.docs.forEach(d => console.log(`      - ${d.data().displayName}`));
-
 }
 
-verifyFix().then(() => process.exit());
+function printMember(doc) {
+    const d = doc.data();
+    console.log(`✅ Member: ${d.displayName || d.name} | Role: ${d.role} | Roles: ${JSON.stringify(d.roles)} | Leader: ${d.leaderUid} (${d.leaderUid === 'gbDQgqS4iih2ZQPB4awCI2xTglJ2' ? '✅ Correct' : '❌ WRONG'})`);
+}
+
+verify();

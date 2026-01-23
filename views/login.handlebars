@@ -1,55 +1,70 @@
 <div class="flex flex-col items-center justify-center min-h-[80vh] px-6 animate-fade-in-down">
-    
+
     <div class="mb-6 relative group">
         <div class="absolute inset-0 bg-imbb-gold/20 rounded-full blur-xl animate-pulse"></div>
-        <img src="/img/icon-512.png" alt="Logo Discípulo" class="w-28 h-28 rounded-3xl shadow-2xl relative z-10 border-2 border-white/10 group-hover:scale-105 transition duration-500">
+        <img src="/img/icon-512.png" alt="Logo Discípulo"
+            class="w-28 h-28 rounded-3xl shadow-2xl relative z-10 border-2 border-white/10 group-hover:scale-105 transition duration-500">
     </div>
-    
+
     <div class="text-center mb-10">
         <p class="text-[10px] text-white/40 uppercase tracking-[0.3em] font-bold mb-2">IGREJA MEMORIAL BATISTA</p>
-        
+
         <h1 class="text-4xl font-serif font-bold text-white leading-tight drop-shadow-lg">
             Vivendo como<br>
             <span class="text-imbb-gold">Discípulo</span>
         </h1>
-        
+
         <p class="text-white/60 text-sm mt-3 font-light">Sua jornada diária de crescimento em Cristo.</p>
     </div>
 
-    <form id="loginForm" class="w-full space-y-5 glass-panel p-8 rounded-[2rem] border border-white/10 shadow-2xl backdrop-blur-md">
-        
+    <form id="loginForm"
+        class="w-full space-y-5 glass-panel p-8 rounded-[2rem] border border-white/10 shadow-2xl backdrop-blur-md">
+
         <div class="space-y-4">
             <div class="relative group">
-                <input type="email" id="email" required 
-                       class="w-full p-4 pl-12 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 outline-none focus:border-imbb-gold focus:bg-black/40 transition text-sm" 
-                       placeholder="Seu e-mail">
-                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-imbb-gold transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zm0 0c0 1.657 1.007 3 2.25 3S21 13.657 21 12a9 9 0 10-2.636 6.364M16.5 12V8.25"></path></svg>
+                <input type="email" id="email" required
+                    class="w-full p-4 pl-12 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 outline-none focus:border-imbb-gold focus:bg-black/40 transition text-sm"
+                    placeholder="Seu e-mail">
+                <div
+                    class="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-imbb-gold transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zm0 0c0 1.657 1.007 3 2.25 3S21 13.657 21 12a9 9 0 10-2.636 6.364M16.5 12V8.25">
+                        </path>
+                    </svg>
                 </div>
             </div>
-            
+
             <div class="relative group">
-                <input type="password" id="password" required 
-                       class="w-full p-4 pl-12 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 outline-none focus:border-imbb-gold focus:bg-black/40 transition text-sm" 
-                       placeholder="Sua senha">
-                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-imbb-gold transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                <input type="password" id="password" required
+                    class="w-full p-4 pl-12 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 outline-none focus:border-imbb-gold focus:bg-black/40 transition text-sm"
+                    placeholder="Sua senha">
+                <div
+                    class="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-imbb-gold transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                        </path>
+                    </svg>
                 </div>
             </div>
         </div>
-        
-        <p id="errorMsg" class="text-red-300 text-xs text-center hidden bg-red-500/10 p-3 rounded-lg border border-red-500/20 font-bold flex items-center justify-center gap-2">
+
+        <p id="errorMsg"
+            class="text-red-300 text-xs text-center hidden bg-red-500/10 p-3 rounded-lg border border-red-500/20 font-bold flex items-center justify-center gap-2">
             <span>⚠️</span> <span id="errorText">Dados incorretos</span>
         </p>
 
-        <button type="submit" class="w-full bg-imbb-gold text-imbb-navy py-4 rounded-xl font-bold shadow-lg shadow-imbb-gold/20 hover:brightness-110 hover:scale-[1.02] transition transform active:scale-95 uppercase tracking-wide text-xs">
+        <button type="submit"
+            class="w-full bg-imbb-gold text-imbb-navy py-4 rounded-xl font-bold shadow-lg shadow-imbb-gold/20 hover:brightness-110 hover:scale-[1.02] transition transform active:scale-95 uppercase tracking-wide text-xs">
             Acessar Plataforma
         </button>
     </form>
 
     <div class="mt-10 text-center">
         <p class="text-xs text-white/40 mb-3">Ainda não tem cadastro?</p>
-        <a href="/register" class="inline-block px-8 py-3 rounded-full border border-white/20 text-white font-bold text-xs hover:bg-white hover:text-imbb-navy transition shadow-glass backdrop-blur-sm">
+        <a href="/register"
+            class="inline-block px-8 py-3 rounded-full border border-white/20 text-white font-bold text-xs hover:bg-white hover:text-imbb-navy transition shadow-glass backdrop-blur-sm">
             Criar minha conta agora
         </a>
     </div>
@@ -84,21 +99,29 @@
         try {
             btn.innerHTML = '<span class="animate-pulse">Autenticando...</span>';
             btn.disabled = true;
-            
-            await signInWithEmailAndPassword(auth, email, password);
-            
+
+            const result = await signInWithEmailAndPassword(auth, email, password);
+
+            // Save to LocalStorage for other pages (PGM, Gestao)
+            const user = result.user;
+            localStorage.setItem('userUid', user.uid);
+            localStorage.setItem('userEmail', user.email);
+
+            // Fetch Claim/Role to save userName/Role? 
+            // Better to let Home page handle detailed fetching, but UID is critical.
+
             // Sucesso
             window.location.href = '/';
-            
+
         } catch (error) {
             btn.innerHTML = "ACESSAR PLATAFORMA";
             btn.disabled = false;
-            
+
             // Tratamento de erros amigável
             let msg = "E-mail ou senha incorretos.";
-            if(error.code === 'auth/too-many-requests') msg = "Muitas tentativas. Tente mais tarde.";
-            if(error.code === 'auth/user-not-found') msg = "Usuário não encontrado.";
-            
+            if (error.code === 'auth/too-many-requests') msg = "Muitas tentativas. Tente mais tarde.";
+            if (error.code === 'auth/user-not-found') msg = "Usuário não encontrado.";
+
             errorText.innerText = msg;
             errorMsg.classList.remove('hidden');
         }

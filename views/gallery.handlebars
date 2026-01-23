@@ -1,0 +1,231 @@
+<div class="px-2 pb-32 animate-fade-in-down">
+
+    <!-- HEADER -->
+    <div class="mb-8 flex items-center justify-between">
+        <a href="/pgm"
+            class="text-white/50 hover:text-white transition flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
+            <span>←</span> Voltar
+        </a>
+        <h2 class="font-serif font-bold text-white text-xl">Galeria do PGM</h2>
+    </div>
+
+    <!-- LOADING STATE -->
+    <div id="loadingState" class="text-center py-20">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-imbb-gold mb-4"></div>
+        <p class="text-white/50 text-xs uppercase tracking-widest">Carregando memórias...</p>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div id="emptyState" class="hidden text-center py-20 flex flex-col items-center">
+        <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center text-3xl mb-4">📸</div>
+        <h3 class="text-white font-bold mb-2">Nenhuma foto ainda</h3>
+        <p class="text-white/40 text-sm max-w-xs mb-8">Registre seus encontros enviando relatórios com fotos.</p>
+        <a href="/pgm/report"
+            class="bg-imbb-gold text-imbb-navy px-6 py-3 rounded-full font-bold text-xs uppercase tracking-widest hover:scale-105 transition">
+            Enviar Primeiro Relatório
+        </a>
+    </div>
+
+    <!-- GALLERY GRID -->
+    <div id="galleryGrid" class="hidden grid grid-cols-2 md:grid-cols-3 gap-3">
+        <!-- Photos injected here -->
+    </div>
+
+</div>
+
+<!-- LIGHTBOX MODAL -->
+<div id="lightbox"
+    class="fixed inset-0 z-[9999] bg-black/95 hidden flex flex-col items-center justify-center opacity-0 transition-opacity duration-300">
+
+    <!-- TOOLBAR -->
+    <div
+        class="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
+        <p id="lbDate" class="text-white/70 text-xs font-bold uppercase tracking-widest"></p>
+        <button onclick="closeLightbox()"
+            class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition">✕</button>
+    </div>
+
+    <!-- IMAGE CONTAINER -->
+    <div class="relative w-full h-full flex items-center justify-center overflow-hidden"
+        ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)">
+
+        <button onclick="prevImage()"
+            class="absolute left-4 p-4 text-white/50 hover:text-white hover:bg-black/40 rounded-full transition z-40 hidden md:block">❮</button>
+
+        <img id="lbImage"
+            class="max-w-full max-h-[85vh] object-contain transition-transform duration-300 transform scale-95 opacity-0">
+
+        <button onclick="nextImage()"
+            class="absolute right-4 p-4 text-white/50 hover:text-white hover:bg-black/40 rounded-full transition z-40 hidden md:block">❯</button>
+    </div>
+
+    <!-- CAPTION -->
+    <div class="absolute bottom-10 px-6 text-center">
+        <p id="lbType" class="text-imbb-gold font-serif font-bold text-lg mb-1"></p>
+        <p class="text-white/30 text-[10px] uppercase tracking-widest">Deslize para navegar</p>
+    </div>
+</div>
+
+<script>
+    let photos = [];
+    let currentIndex = 0;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const pgmId = localStorage.getItem('userPgmId') || await fetchPgmId();
+
+        if (!pgmId) {
+            alert("Erro: Não foi possível identificar seu grupo. Tente sair e entrar novamente.");
+            window.location.href = '/pgm';
+            return;
+        }
+
+        loadPhotos(pgmId);
+    });
+
+    // Helper to get PGM ID if user navigated directly (rare but possible) or localStorage missing
+    async function fetchPgmId() {
+        const uid = localStorage.getItem('userUid');
+        if (!uid) return null;
+        try {
+            const res = await fetch('/api/my-pgm', { // We use the existing endpoint to get metadata
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid })
+            });
+            const data = await res.json();
+            if (data.pgmId) {
+                localStorage.setItem('userPgmId', data.pgmId); // Cache it
+                return data.pgmId;
+            }
+        } catch (e) { console.error(e); }
+        return null;
+    }
+
+    async function loadPhotos(pgmId) {
+        try {
+            const res = await fetch('/api/pgm/gallery-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pgmId })
+            });
+            const data = await res.json();
+
+            photos = data.photos;
+
+            const grid = document.getElementById('galleryGrid');
+            const loading = document.getElementById('loadingState');
+            const empty = document.getElementById('emptyState');
+
+            loading.classList.add('hidden');
+
+            if (!photos || photos.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            grid.classList.remove('hidden');
+            grid.innerHTML = photos.map((p, index) => `
+                <div onclick="openLightbox(${index})" 
+                     class="aspect-square rounded-xl overflow-hidden cursor-pointer relative group border border-white/5">
+                    <img src="${p.url}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110 opacity-80 group-hover:opacity-100">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-3">
+                        <span class="text-[10px] text-white font-bold">${p.formattedDate}</span>
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (error) {
+            console.error(error);
+            document.getElementById('loadingState').innerHTML = '<p class="text-red-400 text-xs">Erro ao carregar fotos.</p>';
+        }
+    }
+
+    // --- LIGHTBOX LOGIC ---
+
+    function openLightbox(index) {
+        currentIndex = index;
+        updateLightbox();
+        const lb = document.getElementById('lightbox');
+        lb.classList.remove('hidden');
+        // Small delay for fade in
+        setTimeout(() => {
+            lb.classList.remove('opacity-0');
+            document.getElementById('lbImage').classList.remove('scale-95', 'opacity-0');
+        }, 10);
+    }
+
+    function closeLightbox() {
+        const lb = document.getElementById('lightbox');
+        lb.classList.add('opacity-0');
+        document.getElementById('lbImage').classList.add('scale-95', 'opacity-0');
+        setTimeout(() => lb.classList.add('hidden'), 300);
+    }
+
+    function updateLightbox() {
+        const p = photos[currentIndex];
+        document.getElementById('lbImage').src = p.url;
+        document.getElementById('lbDate').innerText = p.formattedDate;
+
+        const typeMap = {
+            'normal': 'Reunião Normal',
+            'multiplicacao': 'Multiplicação',
+            'confraternizacao': 'Confraternização',
+            'evangelismo': 'Evangelismo',
+            'discipulado': 'Discipulado'
+        };
+        document.getElementById('lbType').innerText = typeMap[p.type] || 'Encontro PGM';
+    }
+
+    function nextImage() {
+        if (currentIndex < photos.length - 1) {
+            currentIndex++;
+            updateLightbox();
+        } else {
+            // Loop? Or Bounce? Let's Bounce
+            visualBounce('left');
+        }
+    }
+
+    function prevImage() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            updateLightbox();
+        } else {
+            visualBounce('right');
+        }
+    }
+
+    function visualBounce(dir) {
+        const img = document.getElementById('lbImage');
+        img.style.transform = dir === 'left' ? 'translateX(-20px)' : 'translateX(20px)';
+        setTimeout(() => img.style.transform = '', 150);
+    }
+
+    // --- SWIPE LOGIC ---
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    function handleTouchStart(e) {
+        touchStartX = e.changedTouches[0].screenX;
+    }
+
+    function handleTouchEnd(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }
+
+    function handleSwipe() {
+        const threshold = 50;
+        if (touchEndX < touchStartX - threshold) nextImage(); // Swiped Left -> Next
+        if (touchEndX > touchStartX + threshold) prevImage(); // Swiped Right -> Prev
+    }
+
+    // Keyboard Support
+    document.addEventListener('keydown', (e) => {
+        if (document.getElementById('lightbox').classList.contains('hidden')) return;
+        if (e.key === 'ArrowRight') nextImage();
+        if (e.key === 'ArrowLeft') prevImage();
+        if (e.key === 'Escape') closeLightbox();
+    });
+
+</script>

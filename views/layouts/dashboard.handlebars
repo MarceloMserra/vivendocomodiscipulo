@@ -14,7 +14,7 @@
     <link rel="apple-touch-icon" href="/img/icon-192.png">
     <link rel="manifest" href="/manifest.json">
 
-    <title>Vivendo como Discípulo</title>
+    <title>Vivendo como Discípulo - Dashboard</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link
@@ -84,17 +84,6 @@
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
 
-        .glass-panel:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-        }
-
-        .glass-reader {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-        }
-
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -111,9 +100,10 @@
     <div class="app-bg"></div>
     <div class="app-overlay"></div>
 
-    <div class="mx-auto max-w-md h-screen flex flex-col relative">
+    <!-- MAIN CONTAINER: Changed from max-w-md to w-full for Dashboard Layout -->
+    <div class="w-full h-screen flex flex-col relative">
 
-        <header class="p-6 pt-10 shrink-0 relative z-10 flex justify-between items-center">
+        <header class="p-6 pt-10 shrink-0 relative z-10 flex justify-between items-center max-w-7xl mx-auto w-full">
             <div onclick="window.location.href='/profile'" class="cursor-pointer">
                 <p class="text-[10px] text-imbb-gold uppercase tracking-[0.2em] font-bold opacity-90">IGREJA MEMORIAL
                     BATISTA</p>
@@ -128,7 +118,7 @@
             </a>
         </header>
 
-        <main class="flex-1 overflow-y-auto no-scrollbar p-4 pb-28 relative">
+        <main class="flex-1 overflow-y-auto no-scrollbar relative w-full">
             {{{body}}}
         </main>
 
@@ -236,7 +226,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- REGISTRAR SERVICE WORKER (O Segredo do PWA) ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
@@ -254,7 +243,6 @@
                         const fullName = d.name || d.displayName || "Usuário";
                         document.getElementById('userGreeting').innerText = `Olá, ${fullName.split(' ')[0]}!`;
 
-                        // Normalize Role for LocalStorage (Prioritize: Admin > Supervisor > Leader > Member)
                         let normalizedRole = d.role;
                         if (!normalizedRole || normalizedRole === 'undefined') {
                             if (d.roles?.admin) normalizedRole = 'admin';
@@ -262,7 +250,6 @@
                             else if (d.roles?.leader) normalizedRole = 'lider';
                             else normalizedRole = 'membro';
                         }
-
                         localStorage.setItem('userUid', user.uid);
                         localStorage.setItem('userName', fullName);
                         localStorage.setItem('userRole', normalizedRole);

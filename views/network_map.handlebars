@@ -184,40 +184,38 @@
             // Hierarquia
             const root = d3.hierarchy(treeData);
 
-            // Layout (Tree vs Cluster check)
-            // Usando tree layout para simetria (Org Chart Style)
-            // NodeSize: [Width Separation, Height Separation]
-            // Aumentado para 220px de largura para caber nomes e 150px de altura para hierarquia clara
-            const treeLayout = d3.tree().nodeSize([220, 150]);
+            // HORIZONTAL LAYOUT
+            // In D3 tree, size is [height, width] for vertical, but for horizontal we swap x/y logic manually.
+            // Setup: Increased node separation
+            const nodeHeight = 50;
+            const nodeWidth = 250;
 
-            // Initial Expand
+            // Calculate dynamic height based on number of leaves to avoid overlap
+            // Count total leaf nodes (end nodes)
+            let leaves = 0;
+            root.each(d => { if (!d.children && !d._children) leaves++; });
+            const dynamicHeight = Math.max(height, leaves * nodeHeight);
+
+            // Tree Layout
+            const treeLayout = d3.tree().size([dynamicHeight, width * 0.8]);
+
+            // Initial Expand/Collapse
             root.descendants().forEach((d, i) => {
                 d.id = i;
-                // Collapse only levels deeper than 2 (Root -> Supervisors -> Leaders -> [Members collapsed])
-                // Allows user to see the structure immediately
-                if (d.depth > 2) d._children = d.children;
+                // Collapse deeper levels if needed
+                if (d.depth > 1) d._children = d.children; // Collapse PGMs initially? Maybe not.
             });
-
-            // Responsive Initial Scale
-            const isMobile = width < 768;
-            const initialScale = isMobile ? 0.6 : 1.0;
-            const initialY = isMobile ? 50 : 80;
 
             svg = d3.select("#tree-container").append("svg")
                 .attr("width", width)
                 .attr("height", height)
                 .call(d3.zoom().on("zoom", (e) => g.attr("transform", e.transform)));
 
-            // Center and Zoom Initial
-            const initialTransform = d3.zoomIdentity
-                .translate(width / 2, initialY)
-                .scale(initialScale);
-
+            // Shift right slightly
+            const initialTransform = d3.zoomIdentity.translate(80, height / 2).scale(0.8);
             svg.call(d3.zoom().transform, initialTransform);
 
-            // Initial Position Group (Matches transform)
             g = svg.append("g");
-            // .attr("transform", ...) -> Handled by zoomIdentity call above
 
             update(root);
 
@@ -225,34 +223,29 @@
                 const nodes = root.descendants();
                 const links = root.links();
 
-                // Recalculate Layout
                 treeLayout(root);
 
-                // Enforce Fixed Depth (Vertical Spacing)
-                nodes.forEach(d => { d.y = d.depth * 180; });
-
                 // --- LINKS ---
+                // Horizontal Link: curve from (y, x) to (y, x) because we swap coords for display
                 const link = g.selectAll(".link")
                     .data(links, d => d.target.id);
 
-                // Enter Links
                 const linkEnter = link.enter().insert("path", "g")
                     .attr("class", "link")
                     .attr("d", d => {
                         const o = { x: source.x0 || source.x, y: source.y0 || source.y };
-                        return diagonal(o, o);
+                        return horizontalDiagonal(o, o);
                     });
 
-                // Update Links
                 const linkUpdate = link.merge(linkEnter);
+                // Transition to new position (Swapped X/Y for Horizontal: d.x is vertical pos, d.y is horizontal pos)
                 linkUpdate.transition().duration(500)
-                    .attr("d", d => diagonal(d.source, d.target));
+                    .attr("d", d => horizontalDiagonal(d.source, d.target));
 
-                // Exit Links
                 link.exit().transition().duration(500)
                     .attr("d", d => {
                         const o = { x: source.x, y: source.y };
-                        return diagonal(o, o);
+                        return horizontalDiagonal(o, o);
                     })
                     .remove();
 
@@ -260,20 +253,32 @@
                 const node = g.selectAll(".node")
                     .data(nodes, d => d.id);
 
+                // Enter: Start at source position
                 const nodeEnter = node.enter().append("g")
                     .attr("class", "node")
-                    .attr("transform", d => `translate(${source.x0 || source.x},${source.y0 || source.y})`)
+                    .attr("transform", d => `translate(${source.y0 || source.y},${source.x0 || source.x})`)
                     .on("click", click);
 
-                // Circle Background
+                // Node Circle
                 nodeEnter.append("circle")
                     .attr("r", 1e-6)
-                    .style("fill", d => d._children ? "#D4AF37" : "#0A1128");
+                    .style("fill", d => d._children ? "#D4AF37" : "#0A1128")
+                    .style("stroke", d => {
+                        if (d.data.role === 'Supervisor') return '#3B82F6';
+                        if (d.data.role === 'PGM') return '#D4AF37';
+                        return '#FFF';
+                    });
 
-                // Image (Avatar Pattern)
+                // Avatar/Icon Support
                 const defs = svg.append("defs");
                 nodes.forEach(d => {
+                    // Only create pattern if not exists
+                    if (document.getElementById("img-" + d.id)) return;
+
                     const imgId = "img-" + d.id;
+                    let imgUrl = d.data.photo;
+                    if (!imgUrl || imgUrl.includes("undefined")) imgUrl = "/img/icon-192.png"; // Fallback
+
                     defs.append("pattern")
                         .attr("id", imgId)
                         .attr("height", 1)
@@ -283,65 +288,63 @@
                         .attr("height", 1)
                         .attr("width", 1)
                         .attr("preserveAspectRatio", "none")
-                        .attr("xlink:href", d.data.photo);
+                        .attr("xlink:href", imgUrl);
                 });
 
+                // Overlay Avatar
                 nodeEnter.append("circle")
                     .attr("class", "avatar")
-                    .attr("r", 12)
+                    .attr("r", 15)
                     .style("fill", d => `url(#img-${d.id})`)
-                    .style("stroke", "none")
-                    .style("opacity", 0)
-                    .transition().duration(500).style("opacity", 1);
+                    .style("pointer-events", "none");
 
-
-                // Text Label
+                // Labels (Right of node)
                 nodeEnter.append("text")
-                    .attr("dy", 25)
-                    .attr("text-anchor", "middle")
+                    .attr("dy", -10)
+                    .attr("dx", 25)
+                    .attr("text-anchor", "start")
                     .text(d => d.data.name)
+                    .style("font-size", "14px")
+                    .style("fill", "#FFF")
+                    .style("font-weight", "bold")
                     .style("fill-opacity", 0);
 
                 nodeEnter.append("text")
-                    .attr("dy", 35)
-                    .attr("text-anchor", "middle")
-                    .attr("class", "role-badge")
-                    .style("font-size", "7px")
-                    .style("fill", "#D4AF37")
+                    .attr("dy", 5)
+                    .attr("dx", 25)
+                    .attr("text-anchor", "start")
                     .text(d => d.data.role.toUpperCase())
+                    .style("font-size", "9px")
+                    .style("fill", "#D4AF37")
                     .style("fill-opacity", 0);
 
-
-                // Update Nodes
+                // UPDATE
                 const nodeUpdate = node.merge(nodeEnter);
 
+                // Horizontal Translate: X -> Y, Y -> X
                 nodeUpdate.transition().duration(500)
-                    .attr("transform", d => `translate(${d.x},${d.y})`);
+                    .attr("transform", d => `translate(${d.y},${d.x})`);
 
                 nodeUpdate.select("circle")
-                    .attr("r", 16) // Node Size
-                    .style("fill", d => d._children ? "#D4AF37" : "#0A1128")
-                    .style("stroke", d => d.data.role === 'Líder' ? '#D4AF37' : 'rgba(255,255,255,0.2)');
+                    .attr("r", 18)
+                    .style("fill", d => d._children ? "#D4AF37" : "#0A1128");
 
-                nodeUpdate.selectAll("text")
-                    .style("fill-opacity", 1);
+                nodeUpdate.selectAll("text").style("fill-opacity", 1);
 
-                // Exit Nodes
+                // EXIT
                 const nodeExit = node.exit().transition().duration(500)
-                    .attr("transform", d => `translate(${source.x},${source.y})`)
+                    .attr("transform", d => `translate(${source.y},${source.x})`)
                     .remove();
 
                 nodeExit.select("circle").attr("r", 1e-6);
                 nodeExit.select("text").style("fill-opacity", 1e-6);
 
-                // Save positions for transition
                 nodes.forEach(d => {
                     d.x0 = d.x;
                     d.y0 = d.y;
                 });
             }
 
-            // Toggle children
             function click(event, d) {
                 if (d.children) {
                     d._children = d.children;
@@ -353,12 +356,19 @@
                 update(d);
             }
 
-            // Curved Lines
-            function diagonal(s, d) {
-                return `M ${s.x} ${s.y}
-                        C ${s.x} ${(s.y + d.y) / 2},
-                          ${d.x} ${(s.y + d.y) / 2},
-                          ${d.x} ${d.y}`;
+            function horizontalDiagonal(s, d) {
+                // Determine layout: S (Source) -> D (Target)
+                // We swap X/Y here because d.x is vertical in tree layout, but we want horizontal projection
+
+                // M y1 x1
+                // C (y1+y2)/2 x1,
+                //   (y1+y2)/2 x2,
+                //   y2 x2
+
+                return `M ${s.y} ${s.x}
+                        C ${(s.y + d.y) / 2} ${s.x},
+                          ${(s.y + d.y) / 2} ${d.x},
+                          ${d.y} ${d.x}`;
             }
         }
 

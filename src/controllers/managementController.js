@@ -19,119 +19,105 @@ exports.getDashboardStats = async (req, res) => {
 
 exports.getUsersPaginated = async (req, res) => {
     try {
-        const { limit = 20, lastId, roleFilter, search, uid, groupFilter } = req.body;
-        let query = db.collection("users"); // Base collection
+        const { limit = 50, roleFilter, search, uid, groupFilter } = req.body;
+        // Fetch ALL users for in-memory processing (much easier for complex sorting/filtering without composite indexes)
+        // Optimization: For < 2000 users, this is fine. For larger, we need better Firestore indexes.
 
-        // --- 1. SEARCH STRATEGY (Case Insensitive) ---
+        let query = db.collection("users");
+        const snapshot = await query.get();
+
+        // 1. DATA PREPARATION & MAPPING
+        const leaderMap = {};
+        const allUsers = [];
+
+        // First pass: Build Leader Map & Parse Users
+        snapshot.forEach(doc => {
+            const d = doc.data();
+            const u = {
+                uid: doc.id,
+                name: d.displayName || d.name || 'Sem Nome',
+                name_lower: (d.displayName || d.name || '').toLowerCase(),
+                photoUrl: d.photoUrl || d.photoURL || '',
+                leaderUid: d.leaderUid,
+                roles: d.roles || {},
+                createdAt: d.createdAt
+            };
+
+            // Determine Primary Role
+            if (u.roles.admin) u.primaryRole = 'admin';
+            else if (u.roles.supervisor) u.primaryRole = 'supervisor';
+            else if (u.roles.leader) u.primaryRole = 'lider';
+            else u.primaryRole = 'membro'; // Default
+
+            // Register in Leader Map if applicable
+            if (u.primaryRole !== 'membro') {
+                leaderMap[u.uid] = u.name;
+            }
+
+            allUsers.push(u);
+        });
+
+        // 2. FILTERING
+        let filtered = allUsers;
+
+        // Search
         if (search) {
-            const searchLower = search.toLowerCase();
-            query = query.orderBy("name_lower").startAt(searchLower).endAt(searchLower + '\uf8ff');
-        } else if ((!roleFilter || roleFilter === 'all') && !groupFilter) {
-            query = query.orderBy("displayName"); // Use displayName instead of name
+            const term = search.toLowerCase();
+            filtered = filtered.filter(u => u.name_lower.includes(term));
         }
 
-        // --- 2. FILTERS (V3 Role Object) ---
+        // Role Filter (STRICT)
         if (roleFilter && roleFilter !== 'all') {
-            // Map Frontend Roles to DB Keys
-            let dbRole = roleFilter;
-            if (roleFilter === 'lider') dbRole = 'leader';
-            if (roleFilter === 'membro') dbRole = 'member';
-
-            query = query.where(`roles.${dbRole}`, "==", true);
-        }
-
-        if (groupFilter) {
-            // Handle "leaderUid" filtering (V3)
-            query = query.where("leaderUid", "==", groupFilter);
-        }
-
-        // --- 3. PERMISSION CHECK ---
-        let requester = null;
-        if (uid) {
-            const requesterDoc = await db.collection("users").doc(uid).get();
-            if (requesterDoc.exists) requester = new User({ ...requesterDoc.data(), uid });
-
-            // Leader ONLY sees their own group
-            if (requester && requester.isLeader()) {
-                query = query.where("leaderUid", "==", uid);
+            if (roleFilter === 'membro') {
+                // strict member: ONLY member, not leader/sup/admin
+                filtered = filtered.filter(u => u.primaryRole === 'membro');
+            } else {
+                filtered = filtered.filter(u => u.primaryRole === roleFilter);
             }
         }
 
-        // --- 4. PAGINATION ---
-        if (lastId) {
-            const lastDoc = await db.collection("users").doc(lastId).get();
-            if (lastDoc.exists) query = query.startAfter(lastDoc);
+        // Group Filter (Leader UID)
+        if (groupFilter) {
+            filtered = filtered.filter(u => u.leaderUid === groupFilter);
         }
 
-        const snapshot = await query.limit(parseInt(limit)).get();
+        // Permission Check (Leader sees only own group)
+        if (uid) {
+            const requester = allUsers.find(u => u.uid === uid);
+            if (requester && requester.primaryRole === 'lider') {
+                filtered = filtered.filter(u => u.leaderUid === uid || u.uid === uid);
+            }
+        }
 
-        // --- 5. DATA RESOLUTION (Refactored for V3 leaderUid) ---
-        // Build map for Leader Names (UID -> Name)
-        const leaderMap = {};
-
-        // Fetch ALL potential leaders (Admins, Supervisors, Leaders)
-        const [admins, sups, leaders] = await Promise.all([
-            db.collection("users").where("roles.admin", "==", true).get(),
-            db.collection("users").where("roles.supervisor", "==", true).get(),
-            db.collection("users").where("roles.leader", "==", true).get()
-        ]);
-
-        const registerLeader = (doc) => {
-            const d = doc.data();
-            const name = d.displayName || d.name || 'Sem Nome';
-            leaderMap[doc.id] = name;
-        };
-
-        admins.forEach(registerLeader);
-        sups.forEach(registerLeader);
-        leaders.forEach(registerLeader);
-
-        const users = [];
-
-        snapshot.forEach(doc => {
-            const d = doc.data();
-
-            // Extra safety
-            if (requester && requester.isLeader() && d.leaderUid !== uid && doc.id !== uid) return;
-
-            // DETERMINE PRIMARY ROLE (V3)
-            let primaryRole = 'membro';
-            const r = d.roles || {};
-            if (r.admin) primaryRole = 'admin';
-            else if (r.supervisor) primaryRole = 'supervisor';
-            else if (r.leader) primaryRole = 'lider';
-
+        // 3. ENRICHMENT (Leader Names)
+        const finalUsers = filtered.map(u => {
             let groupLabel = '-';
-
-            // LOGIC: Who is this person's leader?
-            if (d.leaderUid && leaderMap[d.leaderUid]) {
-                groupLabel = leaderMap[d.leaderUid];
-            } else if (d.leaderUid) {
-                groupLabel = 'Líder Desconhecido';
-            } else if (primaryRole === 'admin') {
-                groupLabel = '� Mestre';
+            if (u.leaderUid && leaderMap[u.leaderUid]) {
+                groupLabel = leaderMap[u.leaderUid];
+            } else if (u.primaryRole !== 'membro') {
+                // Self-reference or Hierarchy label
+                groupLabel = u.primaryRole === 'lider' ? 'Líder' : (u.primaryRole === 'admin' ? 'Admin' : 'Supervisor');
             } else {
                 groupLabel = 'Sem Líder';
             }
 
-            // Self-Definition Overrides
-            if (primaryRole === 'lider') groupLabel += ' (Líder)';
-            if (primaryRole === 'supervisor') groupLabel += ' (Supervisor)';
-
-            users.push({
-                uid: doc.id,
-                name: d.displayName || d.name || 'Sem Nome',
-                role: primaryRole,
-                photoUrl: d.photoUrl || d.photoURL || '',
-                leaderName: groupLabel, // This now comes from leaderUid
-                leaderUid: d.leaderUid, // Pass for frontend logic
-                // Metadata for UI logic
-                isLeader: (primaryRole === 'lider' || primaryRole === 'supervisor' || primaryRole === 'admin'),
-                memberCount: 0 // Simplified for performance
-            });
+            return {
+                uid: u.uid,
+                name: u.name,
+                role: u.primaryRole,
+                photoUrl: u.photoUrl,
+                leaderName: groupLabel,
+                leaderUid: u.leaderUid,
+                isLeader: (u.primaryRole !== 'membro')
+            };
         });
 
-        res.json({ users, lastId: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null });
+        // 4. SORTING (Alphabetical)
+        finalUsers.sort((a, b) => a.name.localeCompare(b.name));
+
+        // 5. PAGINATION (Total for now)
+        res.json({ users: finalUsers, lastId: null });
+
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: e.message });

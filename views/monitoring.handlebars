@@ -1,0 +1,279 @@
+<div class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+
+    <!-- HEADER -->
+    <div class="text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-6">
+        <div>
+            <h1 class="text-4xl font-serif font-bold text-white tracking-tight flex items-center gap-3">
+                Monitoramento <span
+                    class="px-3 py-1 rounded-full bg-imbb-gold text-black text-xs font-bold uppercase tracking-widest">Premium</span>
+            </h1>
+            <p class="mt-2 text-lg text-gray-400 font-light">
+                Controle semanal de frequência e visitantes.
+            </p>
+        </div>
+
+        <!-- Reports Link Button -->
+        <a href="/monitoring/reports"
+            class="group flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 px-6 py-3 rounded-full transition-all hover:scale-105">
+            <div class="bg-blue-500/20 p-2 rounded-full text-blue-400 group-hover:text-blue-300">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+            </div>
+            <div class="text-left">
+                <p class="text-xs text-gray-400 uppercase font-bold">Análise Estratégica</p>
+                <p class="text-sm font-bold text-white">Ver Relatórios e Gráficos &rarr;</p>
+            </div>
+        </a>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+
+        <!-- COLUMN 1: INPUT ACTIONS (Main Focus) -->
+        <div class="lg:col-span-2 space-y-8">
+
+            <!-- INPUT FORM CARD -->
+            <div id="inputSection"
+                class="bg-gradient-to-br from-gray-900 to-black rounded-3xl border border-white/10 overflow-hidden shadow-2xl relative">
+                <!-- Decorative Glow -->
+                <div
+                    class="absolute -top-24 -right-24 w-64 h-64 bg-imbb-gold/10 rounded-full blur-3xl pointer-events-none">
+                </div>
+
+                <div class="px-8 py-6 border-b border-white/10 bg-white/5 flex items-center gap-4 relative z-10">
+                    <div class="p-3 bg-imbb-gold/20 rounded-full text-imbb-gold">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Nova Frequência</h2>
+                        <p class="text-sm text-gray-400">Registre o relatório semanal da sua célula.</p>
+                    </div>
+                </div>
+
+                <form id="meetingForm" class="p-8 space-y-8 relative z-10">
+                    <!-- Admin PGM Selector -->
+                    <div id="inputPgmSelectWrapper" class="hidden">
+                        <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-6">
+                            <label class="block text-xs font-bold text-yellow-500 uppercase mb-2">Modo
+                                Administrador</label>
+                            <label class="block text-sm text-gray-300 mb-2">Registrar para qual Líder?</label>
+                            <select id="inputLeaderId" name="inputLeaderId"
+                                class="w-full h-10 rounded-lg bg-black/40 border-white/10 text-white focus:ring-imbb-gold text-sm px-3">
+                                <option value="">-- Selecione o Líder --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-400 mb-2">Data da Reunião</label>
+                            <input type="date" id="date" name="date" required
+                                class="w-full h-12 rounded-xl bg-white/5 border-white/10 text-white focus:ring-imbb-gold text-base px-4">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-400 mb-2">Visitantes</label>
+                            <input type="number" id="visitorCount" name="visitorCount" value="0" min="0"
+                                class="w-full h-12 rounded-xl bg-white/5 border-white/10 text-white focus:ring-imbb-gold text-base px-4">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <label class="block text-sm font-bold text-gray-400">Presença (Membros)</label>
+                            <span id="memberCountBadge" class="text-xs bg-white/10 px-2 py-1 rounded text-white/50">0
+                                Selecionados</span>
+                        </div>
+                        <div id="membersList"
+                            class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto bg-black/20 p-4 rounded-xl border border-white/10 custom-scrollbar">
+                            <!-- Loading State -->
+                            <div class="col-span-full flex justify-center py-4">
+                                <div
+                                    class="w-6 h-6 border-2 border-white/20 border-t-imbb-gold rounded-full animate-spin">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit"
+                            class="w-full py-4 rounded-xl bg-imbb-gold hover:bg-yellow-400 text-black font-bold text-lg shadow-lg hover:shadow-yellow-500/20 transition transform hover:-translate-y-1">
+                            Confirmar e Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- COLUMN 2: INFO / QUICK STATS (Optional, Simplified) -->
+        <div class="space-y-6">
+            <!-- Access Denied / Auth Warning -->
+            <div id="authWarning" class="hidden bg-red-500/10 border border-red-500/20 rounded-2xl p-6 text-center">
+                <h3 class="text-red-400 font-bold mb-2">Permissão Necessária</h3>
+                <p class="text-sm text-red-200">Você não tem permissão para registrar frequências. Contate seu
+                    supervisor.</p>
+            </div>
+
+            <!-- Helpful Tips Card -->
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+                <h3 class="text-white font-bold mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Dicas Importantes
+                </h3>
+                <ul class="space-y-3 text-sm text-gray-400">
+                    <li class="flex gap-2">
+                        <span class="text-imbb-gold">•</span>
+                        Registre a frequência no dia da reunião ou no máximo até o dia seguinte.
+                    </li>
+                    <li class="flex gap-2">
+                        <span class="text-imbb-gold">•</span>
+                        Visitantes são contabilizados separadamente. Adicione apenas o número total.
+                    </li>
+                    <li class="flex gap-2">
+                        <span class="text-imbb-gold">•</span>
+                        Se houve uma reunião especial ou conjunta, registre normalmente.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCTB6wkVIfnwx009A67bv8Ar58YpD-59Z8",
+        authDomain: "vivendo-como-discipulo.firebaseapp.com",
+        projectId: "vivendo-como-discipulo",
+        storageBucket: "vivendo-como-discipulo.firebasestorage.app",
+        messagingSenderId: "1086407430526",
+        appId: "1:1086407430526:web:d57784df6283c51729a32f",
+        measurementId: "G-5JV8QRSMXQ"
+    };
+
+    let app; try { app = initializeApp(firebaseConfig); } catch (e) { }
+    const auth = getAuth();
+    let currentUserToken = null;
+    let selectedLeaderId = "";
+
+    // Load Data Simplified (Only for Input)
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUserToken = await user.getIdToken();
+            document.getElementById('date').valueAsDate = new Date(); // Default Today
+            fetchInputData();
+        } else {
+            window.location.href = '/login';
+        }
+    });
+
+    async function fetchInputData() {
+        try {
+            const res = await fetch('/monitoring/api/data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUserToken}` },
+                body: JSON.stringify({ selectedLeaderId })
+            });
+            const data = await res.json();
+
+            if (!data.permissions || !data.permissions.canInput) {
+                document.getElementById('inputSection').classList.add('opacity-50', 'pointer-events-none');
+                document.getElementById('authWarning').classList.remove('hidden');
+                return;
+            }
+
+            // Admin Selector
+            if (data.permissions.isAdmin) {
+                document.getElementById('inputPgmSelectWrapper').classList.remove('hidden');
+                const select = document.getElementById('inputLeaderId');
+                if (select.options.length <= 1) {
+                    data.availableLeaders.forEach(l => {
+                        const opt = document.createElement('option');
+                        opt.value = l.uid; opt.innerText = l.name; select.appendChild(opt);
+                    });
+                    // Restore selection
+                    select.value = selectedLeaderId;
+                }
+            }
+
+            // Members List
+            const list = document.getElementById('membersList');
+            list.innerHTML = '';
+            if (data.members.length === 0) {
+                list.innerHTML = `<p class="col-span-full text-center text-gray-500 py-4 italic">Nenhum membro encontrado.</p>`;
+            } else {
+                data.members.forEach(m => {
+                    const avatar = m.photoUrl ? `<img src="${m.photoUrl}" class="w-8 h-8 rounded-full object-cover">` : `<div class="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-xs font-bold">${m.name.charAt(0)}</div>`;
+                    const div = document.createElement('label');
+                    div.className = "flex items-center space-x-3 p-3 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 cursor-pointer transition select-none group";
+                    div.innerHTML = `
+                         <div class="relative flex items-center">
+                            <input type="checkbox" name="attendees" value="${m.uid}" class="peer h-5 w-5 bg-black/50 border-gray-500 rounded text-imbb-gold focus:ring-imbb-gold transition-colors checked:bg-imbb-gold checked:border-imbb-gold">
+                         </div>
+                        <div class="flex-shrink-0 opacity-80 peer-checked:opacity-100">${avatar}</div>
+                        <span class="text-sm font-medium text-gray-300 peer-checked:text-white truncate transition-colors">${m.name}</span>
+                    `;
+                    // Checkbox listener to update badge
+                    div.querySelector('input').addEventListener('change', updateBadge);
+                    list.appendChild(div);
+                });
+            }
+
+        } catch (e) { console.error(e); }
+    }
+
+    // Admin Leader Change
+    const inputLeaderSelect = document.getElementById('inputLeaderId');
+    if (inputLeaderSelect) {
+        inputLeaderSelect.addEventListener('change', (e) => {
+            selectedLeaderId = e.target.value;
+            fetchInputData();
+        });
+    }
+
+    // Update Count Badge
+    function updateBadge() {
+        const count = document.querySelectorAll('input[name="attendees"]:checked').length;
+        const total = document.querySelectorAll('input[name="attendees"]').length;
+        const badge = document.getElementById('memberCountBadge');
+        badge.innerText = `${count} de ${total} Presentes`;
+        badge.className = count > 0 ? "text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded font-bold transition-all" : "text-xs bg-white/10 px-2 py-1 rounded text-white/50 transition-all";
+    }
+
+    // Submit
+    document.getElementById('meetingForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        const text = btn.innerText;
+        btn.innerHTML = 'Salvando...'; btn.disabled = true;
+        try {
+            const fd = new FormData(e.target);
+            const attendees = [];
+            e.target.querySelectorAll('input[name="attendees"]:checked').forEach(c => attendees.push(c.value));
+
+            const res = await fetch('/monitoring/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUserToken}` },
+                body: JSON.stringify({
+                    date: fd.get('date'),
+                    visitorCount: fd.get('visitorCount'),
+                    attendees,
+                    targetLeaderUid: selectedLeaderId
+                })
+            });
+            if (res.ok) {
+                alert('Salvo com sucesso!'); window.location.reload();
+            } else {
+                throw new Error((await res.json()).error);
+            }
+        } catch (err) { alert(err.message); btn.innerText = text; btn.disabled = false; }
+    });
+</script>
