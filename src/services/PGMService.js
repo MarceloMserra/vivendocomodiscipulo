@@ -219,128 +219,89 @@ class PGMService {
         const rootUser = await User.findById(rootUid);
         if (!rootUser) throw new Error("Usuário raiz não encontrado");
 
-        const { db } = require('../config/firebase'); // Lazy load
+        const { db } = require('../config/firebase');
 
-        // Helper: Build Member Nodes for a PGM
-        // Returns list of children nodes (Users)
-        const buildMemberNodes = async (pgmId) => {
-            // Strategy: Fetch by pgmId (V3) AND by leaderUid (Legacy) and Merge
-            // 1. Find PGM to get Leader UID
-            const pgmDoc = await db.collection("pgms").doc(pgmId).get();
-            const leaderUid = pgmDoc.exists ? pgmDoc.data().leaderUid : null;
+        // Busca todos os dados em paralelo — uma única rodada de queries
+        const [pgmsSnap, allUsersSnap] = await Promise.all([
+            db.collection('pgms').where('active', '==', true).get(),
+            db.collection('users').get()
+        ]);
 
-            const nodes = [];
-            const seenUids = new Set();
+        const pgms = [];
+        pgmsSnap.forEach(d => pgms.push({ id: d.id, ...d.data() }));
 
-            // Query 1: By pgmId
-            const snapPgm = await db.collection("users").where("pgmId", "==", pgmId).get();
-
-            // Query 2: By leaderUid (if available)
-            let snapLeader = { empty: true, docs: [] };
-            if (leaderUid) {
-                snapLeader = await db.collection("users").where("leaderUid", "==", leaderUid).get();
-            }
-
-            const processDoc = (d, id) => {
-                if (seenUids.has(id)) return;
-                seenUids.add(id);
-
-                // Don't include leaders as children of their own PGM (redundant)
-                if (d.roles?.leader || d.roles?.supervisor || d.roles?.admin) return;
-                // Also skip if d.role string says leader (Legacy safety)
-                if (d.role === 'lider' || d.role === 'supervisor') return;
-
-                nodes.push({
-                    name: d.displayName || d.name || "Sem Nome",
-                    role: 'Membro',
-                    photo: d.photoUrl || d.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(d.displayName || "U")}&background=random&color=fff`,
-                    children: []
-                });
+        // Monta mapa de todos os usuários em memória (sem base64 de foto)
+        const allUsers = {};
+        allUsersSnap.forEach(doc => {
+            const d = doc.data();
+            allUsers[doc.id] = {
+                uid: doc.id,
+                name: d.displayName || d.name || 'Sem Nome',
+                role: d.role,
+                roles: d.roles || {},
+                pgmId: d.pgmId,
+                leaderUid: d.leaderUid,
+                photo: (d.photoUrl && !d.photoUrl.startsWith('data:')) ? d.photoUrl :
+                       (d.photoURL && !d.photoURL.startsWith('data:')) ? d.photoURL :
+                       `https://ui-avatars.com/api/?name=${encodeURIComponent(d.displayName || 'U')}&background=C5A059&color=fff`
             };
+        });
 
-            snapPgm.forEach(doc => processDoc(doc.data(), doc.id));
-            snapLeader.docs.forEach(doc => processDoc(doc.data(), doc.id));
-
+        // Monta membros de um PGM a partir do mapa em memória (sem query extra)
+        const buildMemberNodes = (pgmId, pgmLeaderUid) => {
+            const seen = new Set();
+            const nodes = [];
+            Object.values(allUsers).forEach(u => {
+                if (seen.has(u.uid)) return;
+                if (u.pgmId !== pgmId && u.leaderUid !== pgmLeaderUid) return;
+                if (u.roles?.leader || u.roles?.supervisor || u.roles?.admin) return;
+                if (u.role === 'lider' || u.role === 'supervisor' || u.role === 'admin') return;
+                seen.add(u.uid);
+                nodes.push({ name: u.name, role: 'Membro', photo: u.photo, children: [] });
+            });
             return nodes;
         };
-
-        // --- GLOBAL ADMIN / SUPERVISOR VIEW ---
-        // If Admin, show All Supervisors -> Their PGMs
-        // If Supervisor, show Me -> My PGMs
 
         let rootNode = null;
 
         if (rootUser.isAdmin()) {
-            rootNode = {
-                name: "REDE GLOBAL",
-                role: "Admin",
-                photo: "/img/icon-192.png",
-                children: []
-            };
+            rootNode = { name: "REDE GLOBAL", role: "Admin", photo: "/img/icon-192.png", children: [] };
 
-            // 1. Get All PGMs
-            const pgmsSnap = await db.collection('pgms').where('active', '==', true).get();
-            const pgms = [];
-            pgmsSnap.forEach(d => pgms.push({ id: d.id, ...d.data() }));
+            let supervisors = Object.values(allUsers).filter(u =>
+                u.roles?.supervisor && u.uid !== rootUid
+            );
 
-            // 2. Get All Supervisors (to group PGMs)
-            const supsSnap = await db.collection('users').where('roles.supervisor', '==', true).get();
-            let supervisors = [];
-            supsSnap.forEach(s => supervisors.push({ id: s.id, ...s.data() }));
-
-            // --- CUSTOM FILTERING / MERGING RULES ---
-
-            // Rule A: Hide Admin (Self) from the Supervisors list if appearing there
-            supervisors = supervisors.filter(s => s.id !== rootUid);
-
-            // Rule B: Merge "Ronilda" into "Luiz"
-            // Strategy: Find both, keep Luiz, rename him, and ensure we grab PGMs for both if any exist.
-            const luizIndex = supervisors.findIndex(s => s.displayName.includes("Luiz"));
-            const ronildaIndex = supervisors.findIndex(s => s.displayName.includes("Ronilda"));
-
+            // Merge "Ronilda" em "Luiz"
+            const luizIndex = supervisors.findIndex(s => s.name.includes("Luiz"));
+            const ronildaIndex = supervisors.findIndex(s => s.name.includes("Ronilda"));
             if (luizIndex !== -1 && ronildaIndex !== -1) {
-                const luiz = supervisors[luizIndex];
-                const ronilda = supervisors[ronildaIndex];
-
-                // Merge Name
-                luiz.displayName = "Luiz e Ronilda";
-                // Store Ronilda's ID to fetch her PGMs too
-                luiz.secondaryUid = ronilda.id;
-
-                // Remove Ronilda from list
+                supervisors[luizIndex].name = "Luiz e Ronilda";
+                supervisors[luizIndex].secondaryUid = supervisors[ronildaIndex].uid;
                 supervisors.splice(ronildaIndex, 1);
             }
 
-            // 3. Build Tree
             for (const sup of supervisors) {
-                // Find PGMs led by this Supervisor (Network)
-                // Check both Primary UID and Secondary UID (if merged)
                 const myPgms = pgms.filter(p =>
-                    p.supervisorUid === sup.id ||
+                    p.supervisorUid === sup.uid ||
                     (sup.secondaryUid && p.supervisorUid === sup.secondaryUid)
                 );
 
-                const pgmNodes = [];
-                for (const p of myPgms) {
-                    pgmNodes.push({
-                        name: p.name.replace('PGM ', ''), // Clean Name
-                        role: 'PGM',
-                        photo: "/img/pgm-icon.png", // Generic Icon or Composite
-                        // For now, let's keep it simple: No members expanded by default to save space
-                        // But we CAN add them if we want deep tree
-                        children: await buildMemberNodes(p.id)
-                    });
-                }
+                const pgmNodes = myPgms.map(p => ({
+                    name: p.name.replace('PGM ', ''),
+                    role: 'PGM',
+                    photo: "/img/pgm-icon.png",
+                    children: buildMemberNodes(p.id, p.leaderUid)
+                }));
 
                 rootNode.children.push({
-                    name: sup.displayName,
+                    name: sup.name,
                     role: "Supervisor",
-                    photo: sup.photoUrl || sup.photoURL,
+                    photo: sup.photo,
                     children: pgmNodes
                 });
             }
 
-            // Catch Orphan PGMs (No Supervisor)
+            // PGMs sem supervisor
             const orphanPgms = pgms.filter(p => !p.supervisorUid);
             if (orphanPgms.length > 0) {
                 rootNode.children.push({
@@ -352,23 +313,21 @@ class PGMService {
             }
 
         } else if (rootUser.isSupervisor()) {
-            // Supervisor View: Me -> My PGMs
+            const supUser = allUsers[rootUid];
             rootNode = {
-                name: rootUser.displayName,
+                name: supUser?.name || rootUser.displayName,
                 role: "Supervisor",
-                photo: rootUser.photoURL,
+                photo: supUser?.photo || "",
                 children: []
             };
 
-            const pgmsSnap = await db.collection('pgms').where('supervisorUid', '==', rootUser.uid).get();
-            for (const doc of pgmsSnap.docs) {
-                const p = doc.data();
-                rootNode.children.push({
-                    name: p.name.replace('PGM ', ''),
-                    role: 'PGM',
-                    children: await buildMemberNodes(doc.id)
-                });
-            }
+            const myPgms = pgms.filter(p => p.supervisorUid === rootUid);
+            rootNode.children = myPgms.map(p => ({
+                name: p.name.replace('PGM ', ''),
+                role: 'PGM',
+                photo: "/img/pgm-icon.png",
+                children: buildMemberNodes(p.id, p.leaderUid)
+            }));
         } else {
             // Leader/Member View: Just My PGM
             // Fallback to legacy
