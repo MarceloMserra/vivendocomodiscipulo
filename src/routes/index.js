@@ -10,6 +10,8 @@ const pgmController = require('../controllers/pgmController');
 const adminController = require('../controllers/adminController');
 const contentController = require('../controllers/contentController');
 const managementController = require('../controllers/managementController');
+const checkinController = require('../controllers/checkinController');
+const prayerController = require('../controllers/prayerController');
 
 // --- Routes ---
 
@@ -70,5 +72,21 @@ router.post('/api/admin/update-role', requireAuth, adminController.updateRole);
 
 // 7. Upload PDF (Content)
 router.post('/upload-pdf', requireAuth, uploadPDF.single("boletim"), contentController.uploadPdf);
+
+// 8. QR Check-in
+router.get('/checkin', requireAuth, checkinController.getCheckinPage);
+router.get('/checkin/scan', checkinController.getCheckinScanPage); // Public - Firebase auth on client
+router.post('/api/checkin/start', requireAuth, checkinController.startSession);
+router.post('/api/checkin/confirm', requireAuth, checkinController.confirmPresence);
+router.post('/api/checkin/close', requireAuth, checkinController.closeSession);
+router.post('/api/checkin/status', requireAuth, checkinController.getSessionStatus);
+
+// 9. Pedidos de Oração
+router.get('/oracao', requireAuth, prayerController.getPrayersPage);
+router.post('/api/oracao/list', requireAuth, prayerController.listPrayers);
+router.post('/api/oracao/add', requireAuth, prayerController.addPrayer);
+router.post('/api/oracao/pray', requireAuth, prayerController.prayForRequest);
+router.post('/api/oracao/answer', requireAuth, prayerController.markAnswered);
+router.post('/api/oracao/delete', requireAuth, prayerController.deletePrayer);
 
 module.exports = router;

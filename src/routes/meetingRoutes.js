@@ -14,5 +14,6 @@ router.get('/reports', meetingController.getReportsPage);
 // Client must send Bearer Token
 router.post('/api/data', verifyToken, requireAuth, meetingController.getMonitoringData);
 router.post('/save', verifyToken, requireAuth, meetingController.saveMeeting);
+router.get('/export', verifyToken, requireAuth, meetingController.exportMeetings);
 
 module.exports = router;

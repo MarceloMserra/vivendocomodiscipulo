@@ -1,0 +1,153 @@
+<div class="flex flex-col items-center justify-center min-h-[80vh] px-6 animate-fade-in-down">
+
+    <div class="mb-6">
+        <div class="w-20 h-20 bg-imbb-gold/20 rounded-2xl flex items-center justify-center mx-auto">
+            <svg class="w-10 h-10 text-imbb-gold" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+        </div>
+    </div>
+
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-serif font-bold text-white">Check-in</h1>
+        <p class="text-white/60 text-sm mt-2">Confirme sua presença no encontro</p>
+    </div>
+
+    <!-- Loading state -->
+    <div id="loadingState" class="text-center text-white/50 animate-pulse">
+        <p>Verificando...</p>
+    </div>
+
+    <!-- Error state -->
+    <div id="errorState" class="hidden w-full glass-panel rounded-2xl p-6 text-center">
+        <p class="text-red-300" id="errorMsg">Erro ao carregar.</p>
+        <a href="/" class="mt-4 inline-block text-imbb-gold text-sm">Voltar ao início</a>
+    </div>
+
+    <!-- Main confirm button -->
+    <div id="confirmState" class="hidden w-full">
+        <div class="glass-panel rounded-2xl p-6 text-center mb-4">
+            <p class="text-white/70 text-sm mb-1">Encontro do dia</p>
+            <p id="meetingDate" class="text-white font-bold text-lg"></p>
+            <p class="text-white/50 text-xs mt-1" id="leaderName"></p>
+        </div>
+
+        <button onclick="confirmPresence()"
+            class="w-full bg-imbb-gold text-imbb-navy py-5 rounded-2xl font-bold text-lg shadow-lg shadow-imbb-gold/30 hover:brightness-110 transition active:scale-95">
+            ✓ Confirmar Minha Presença
+        </button>
+    </div>
+
+    <!-- Already confirmed -->
+    <div id="alreadyState" class="hidden w-full glass-panel rounded-2xl p-6 text-center">
+        <div class="text-4xl mb-3">✅</div>
+        <p class="text-white font-bold">Presença já confirmada!</p>
+        <a href="/" class="mt-4 inline-block text-imbb-gold text-sm">Ir para o início</a>
+    </div>
+
+    <!-- Success state -->
+    <div id="successState" class="hidden w-full glass-panel rounded-2xl p-6 text-center">
+        <div class="text-5xl mb-4">🙏</div>
+        <p class="text-white font-bold text-xl">Presença confirmada!</p>
+        <p class="text-white/60 text-sm mt-2">Que bom que você está aqui!</p>
+        <a href="/" class="mt-6 inline-block bg-imbb-gold text-imbb-navy px-8 py-3 rounded-xl font-bold text-sm">
+            Ir para o início
+        </a>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCTB6wkVIfnwx009A67bv8Ar58YpD-59Z8",
+        authDomain: "vivendo-como-discipulo.firebaseapp.com",
+        projectId: "vivendo-como-discipulo",
+        storageBucket: "vivendo-como-discipulo.firebasestorage.app",
+        messagingSenderId: "1086407430526",
+        appId: "1:1086407430526:web:d57784df6283c51729a32f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const token = new URLSearchParams(window.location.search).get('token');
+
+    function showError(msg) {
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('errorMsg').textContent = msg;
+        document.getElementById('errorState').classList.remove('hidden');
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            // Save redirect and go to login
+            sessionStorage.setItem('checkinRedirect', window.location.href);
+            window.location.href = '/login';
+            return;
+        }
+
+        if (!token) { showError('Token inválido.'); return; }
+
+        // Fetch session info from backend
+        try {
+            const idToken = await user.getIdToken();
+            const res = await fetch('/api/checkin/status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                body: JSON.stringify({ sessionId: token })
+            });
+            const data = await res.json();
+            if (!data.success) { showError(data.error || 'Sessão inválida.'); return; }
+
+            if (data.status !== 'active') { showError('Este QR Code não está mais ativo.'); return; }
+
+            // Show confirm button
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('confirmState').classList.remove('hidden');
+
+            // Format date display
+            const today = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+            document.getElementById('meetingDate').textContent = today;
+            document.getElementById('leaderName').textContent = 'Líder: ' + (data.leaderName || '');
+
+        } catch (e) {
+            showError('Erro de conexão.');
+        }
+    });
+
+    window.confirmPresence = async () => {
+        const btn = document.querySelector('#confirmState button');
+        btn.disabled = true;
+        btn.textContent = 'Confirmando...';
+
+        try {
+            const idToken = await auth.currentUser.getIdToken();
+            const res = await fetch('/api/checkin/confirm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                body: JSON.stringify({ token })
+            });
+            const data = await res.json();
+
+            document.getElementById('confirmState').classList.add('hidden');
+            if (data.alreadyConfirmed) {
+                document.getElementById('alreadyState').classList.remove('hidden');
+            } else if (data.success) {
+                document.getElementById('successState').classList.remove('hidden');
+            } else {
+                showError(data.error || 'Erro ao confirmar.');
+            }
+        } catch (e) {
+            btn.disabled = false;
+            btn.textContent = '✓ Confirmar Minha Presença';
+            showError('Erro de conexão.');
+        }
+    };
+
+    // Handle redirect after login
+    const redirect = sessionStorage.getItem('checkinRedirect');
+    if (redirect) {
+        sessionStorage.removeItem('checkinRedirect');
+    }
+</script>

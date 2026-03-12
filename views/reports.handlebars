@@ -31,6 +31,14 @@
                         <option value="">Todas as PGMs</option>
                     </select>
                 </div>
+
+                <button onclick="exportExcel()"
+                    class="flex items-center gap-1.5 bg-green-600/80 hover:bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                    </svg>
+                    Exportar Excel
+                </button>
             </div>
         </div>
     </div>
@@ -281,4 +289,15 @@
     ['filterStartDate', 'filterEndDate', 'filterPgmId'].forEach(id => {
         document.getElementById(id).addEventListener('change', fetchData);
     });
+
+    window.exportExcel = async () => {
+        const startDate = document.getElementById('filterStartDate').value;
+        const endDate = document.getElementById('filterEndDate').value;
+        const pgmId = document.getElementById('filterPgmId').value;
+        let url = '/monitoring/export?';
+        if (startDate) url += `startDate=${startDate}&`;
+        if (endDate) url += `endDate=${endDate}&`;
+        if (pgmId) url += `pgmId=${pgmId}&`;
+        window.location.href = url;
+    };
 </script>

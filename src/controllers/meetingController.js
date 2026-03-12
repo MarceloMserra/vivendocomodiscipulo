@@ -1,5 +1,6 @@
 const { db, admin } = require('../config/firebase');
 const User = require('../models/User');
+const xlsx = require('xlsx');
 
 exports.getMonitoringPage = (req, res) => {
     // Render the simplified Input Shell
@@ -250,6 +251,62 @@ exports.getMonitoringData = async (req, res) => {
         } else {
             console.error(e);
         }
+        res.status(500).json({ error: e.message });
+    }
+};
+
+exports.exportMeetings = async (req, res) => {
+    try {
+        if (!req.user) return res.status(401).json({ error: 'Não autenticado' });
+        const uid = req.user.uid;
+        const userDoc = await db.collection('users').doc(uid).get();
+        const userData = new User({ ...userDoc.data(), uid });
+
+        if (!userData.isSupervisor() && !userData.isAdmin()) {
+            return res.status(403).json({ error: 'Acesso negado.' });
+        }
+
+        const { startDate, endDate, pgmId } = req.query;
+        const start = startDate ? new Date(startDate + 'T00:00:00') : new Date(Date.now() - 90 * 86400000);
+        const end = endDate ? new Date(endDate + 'T23:59:59') : new Date();
+
+        const pgmsSnap = await db.collection('pgms').get();
+        const pgmMap = {};
+        pgmsSnap.forEach(doc => { pgmMap[doc.id] = doc.data(); });
+
+        let query = db.collection('meetings')
+            .where('date', '>=', admin.firestore.Timestamp.fromDate(start))
+            .where('date', '<=', admin.firestore.Timestamp.fromDate(end))
+            .orderBy('date', 'desc');
+
+        if (pgmId) query = query.where('pgmId', '==', pgmId);
+
+        const snap = await query.get();
+        const rows = [];
+        snap.forEach(doc => {
+            const m = doc.data();
+            const pgmInfo = m.pgmId ? pgmMap[m.pgmId] : null;
+            rows.push({
+                'Data': m.date ? m.date.toDate().toLocaleDateString('pt-BR') : '',
+                'PGM': pgmInfo ? pgmInfo.name : (m.pgmId || 'Desconhecido'),
+                'Supervisor': pgmInfo ? (pgmInfo.supervisorName || '') : '',
+                'Participantes': Array.isArray(m.attendees) ? m.attendees.length : (m.legacyMemberCount || 0),
+                'Visitantes': m.visitorCount || 0,
+                'Total': (Array.isArray(m.attendees) ? m.attendees.length : (m.legacyMemberCount || 0)) + (m.visitorCount || 0)
+            });
+        });
+
+        const wb = xlsx.utils.book_new();
+        const ws = xlsx.utils.json_to_sheet(rows);
+        ws['!cols'] = [{ wch: 12 }, { wch: 25 }, { wch: 20 }, { wch: 15 }, { wch: 12 }, { wch: 10 }];
+        xlsx.utils.book_append_sheet(wb, ws, 'Frequências');
+
+        const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+        res.setHeader('Content-Disposition', `attachment; filename="frequencias_${new Date().toISOString().split('T')[0]}.xlsx"`);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.send(buffer);
+    } catch (e) {
+        console.error('Export error:', e);
         res.status(500).json({ error: e.message });
     }
 };

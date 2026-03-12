@@ -1,0 +1,191 @@
+<div class="flex flex-col min-h-screen px-4 pb-32 pt-2 animate-fade-in-down max-w-lg mx-auto">
+
+    <!-- Header -->
+    <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-imbb-gold/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <svg class="w-9 h-9 text-imbb-gold" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z"/>
+            </svg>
+        </div>
+        <h1 class="text-xl font-bold text-white">Check-in QR</h1>
+        <p class="text-white/50 text-sm mt-1">Gere o QR Code para o encontro de hoje</p>
+    </div>
+
+    <!-- Acesso negado (líderes only) -->
+    <div id="accessDenied" class="hidden glass-panel rounded-2xl p-6 text-center">
+        <p class="text-white/70">Apenas líderes, supervisores e admins podem gerar QR Codes.</p>
+    </div>
+
+    <!-- Formulário inicial -->
+    <div id="formPanel" class="glass-panel rounded-2xl p-5 mb-4 hidden">
+        <h2 class="text-white font-semibold mb-4">Dados do Encontro</h2>
+        <div class="space-y-3">
+            <div>
+                <label class="text-white/60 text-xs uppercase tracking-wider">Data do Encontro</label>
+                <input type="date" id="meetingDate"
+                    class="mt-1 w-full p-3 rounded-xl bg-black/20 border border-white/10 text-white outline-none focus:border-imbb-gold transition text-sm">
+            </div>
+        </div>
+        <button onclick="generateQR()"
+            class="mt-4 w-full bg-imbb-gold text-imbb-navy py-3 rounded-xl font-bold text-sm hover:brightness-110 transition">
+            Gerar QR Code
+        </button>
+    </div>
+
+    <!-- QR Code Panel -->
+    <div id="qrPanel" class="hidden">
+        <div class="glass-panel rounded-2xl p-5 mb-4 text-center">
+            <p class="text-white/60 text-xs mb-3">Mostre este QR Code para os membros confirmarem presença</p>
+            <div class="bg-white rounded-2xl p-4 inline-block">
+                <img id="qrImage" src="" alt="QR Code" class="w-56 h-56 mx-auto">
+            </div>
+            <div class="mt-3 flex gap-2 justify-center">
+                <button onclick="downloadQR()" class="px-4 py-2 bg-white/10 rounded-xl text-white text-xs hover:bg-white/20 transition">
+                    Baixar QR
+                </button>
+                <button onclick="copyLink()" class="px-4 py-2 bg-white/10 rounded-xl text-white text-xs hover:bg-white/20 transition">
+                    Copiar Link
+                </button>
+            </div>
+        </div>
+
+        <!-- Live count -->
+        <div class="glass-panel rounded-2xl p-5 mb-4">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-white font-semibold">Confirmados</h2>
+                <span id="confirmedCount" class="bg-imbb-gold text-imbb-navy font-bold text-sm px-3 py-1 rounded-full">0</span>
+            </div>
+            <div id="confirmedList" class="space-y-1 max-h-48 overflow-y-auto text-sm text-white/70 text-center">
+                <p class="text-white/40 italic">Aguardando confirmações...</p>
+            </div>
+        </div>
+
+        <!-- Encerrar -->
+        <div class="glass-panel rounded-2xl p-5">
+            <h2 class="text-white font-semibold mb-3">Encerrar Encontro</h2>
+            <div>
+                <label class="text-white/60 text-xs uppercase tracking-wider">Visitantes</label>
+                <input type="number" id="visitorCount" value="0" min="0"
+                    class="mt-1 w-full p-3 rounded-xl bg-black/20 border border-white/10 text-white outline-none focus:border-imbb-gold transition text-sm">
+            </div>
+            <button onclick="closeSession()"
+                class="mt-4 w-full bg-white/10 border border-white/20 text-white py-3 rounded-xl font-bold text-sm hover:bg-white/20 transition">
+                Salvar e Encerrar
+            </button>
+        </div>
+    </div>
+
+    <div id="successMsg" class="hidden glass-panel rounded-2xl p-6 text-center">
+        <div class="text-4xl mb-3">🎉</div>
+        <p class="text-white font-bold text-lg">Reunião salva!</p>
+        <p id="successDetail" class="text-white/60 text-sm mt-1"></p>
+        <button onclick="location.reload()" class="mt-4 px-6 py-2 bg-imbb-gold text-imbb-navy rounded-xl font-bold text-sm">
+            Novo Check-in
+        </button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCTB6wkVIfnwx009A67bv8Ar58YpD-59Z8",
+        authDomain: "vivendo-como-discipulo.firebaseapp.com",
+        projectId: "vivendo-como-discipulo",
+        storageBucket: "vivendo-como-discipulo.firebasestorage.app",
+        messagingSenderId: "1086407430526",
+        appId: "1:1086407430526:web:d57784df6283c51729a32f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    let idToken = null;
+    let sessionId = null;
+    let qrUrl = null;
+    let pollInterval = null;
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) { window.location.href = '/login'; return; }
+        idToken = await user.getIdToken();
+        const role = localStorage.getItem('userRole');
+        if (!['lider', 'supervisor', 'admin'].includes(role)) {
+            document.getElementById('accessDenied').classList.remove('hidden');
+            return;
+        }
+        // Set default date to today
+        document.getElementById('meetingDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('formPanel').classList.remove('hidden');
+    });
+
+    window.generateQR = async () => {
+        const date = document.getElementById('meetingDate').value;
+        if (!date) { alert('Selecione a data.'); return; }
+
+        const freshToken = await auth.currentUser.getIdToken();
+        const res = await fetch('/api/checkin/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${freshToken}` },
+            body: JSON.stringify({ date })
+        });
+        const data = await res.json();
+        if (!data.success) { alert(data.error); return; }
+
+        sessionId = data.sessionId;
+        qrUrl = data.url;
+        document.getElementById('qrImage').src = data.qrDataUrl;
+        document.getElementById('formPanel').classList.add('hidden');
+        document.getElementById('qrPanel').classList.remove('hidden');
+
+        // Poll for confirmations every 5 seconds
+        pollInterval = setInterval(pollStatus, 5000);
+    };
+
+    window.downloadQR = () => {
+        const img = document.getElementById('qrImage');
+        const a = document.createElement('a');
+        a.href = img.src;
+        a.download = 'qr-checkin.png';
+        a.click();
+    };
+
+    window.copyLink = () => {
+        navigator.clipboard.writeText(qrUrl).then(() => alert('Link copiado!'));
+    };
+
+    async function pollStatus() {
+        if (!sessionId || !auth.currentUser) return;
+        const token = await auth.currentUser.getIdToken();
+        const res = await fetch('/api/checkin/status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ sessionId })
+        });
+        const data = await res.json();
+        if (!data.success) return;
+        document.getElementById('confirmedCount').textContent = data.count;
+        if (data.count > 0) {
+            document.getElementById('confirmedList').innerHTML = data.confirmedNames
+                .map(n => `<div class="py-1 border-b border-white/5">${n}</div>`).join('');
+        }
+    }
+
+    window.closeSession = async () => {
+        if (!confirm(`Encerrar check-in e salvar reunião?`)) return;
+        clearInterval(pollInterval);
+        const visitorCount = document.getElementById('visitorCount').value;
+        const token = await auth.currentUser.getIdToken();
+        const res = await fetch('/api/checkin/close', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ sessionId, visitorCount })
+        });
+        const data = await res.json();
+        if (!data.success) { alert(data.error); return; }
+        document.getElementById('qrPanel').classList.add('hidden');
+        document.getElementById('successMsg').classList.remove('hidden');
+        document.getElementById('successDetail').textContent = data.message;
+    };
+</script>
