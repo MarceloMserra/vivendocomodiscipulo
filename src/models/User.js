@@ -59,8 +59,8 @@ class User {
     }
 
     isAdmin() { return !!this.roles.admin; }
-    isSupervisor() { return !!this.roles.supervisor; }
-    isLeader() { return !!this.roles.leader; }
+    isSupervisor() { return !!this.roles.supervisor || !!this.roles.admin; }
+    isLeader() { return !!this.roles.leader || !!this.roles.lider || !!this.roles.admin || !!this.roles.supervisor; }
 }
 
 module.exports = User;

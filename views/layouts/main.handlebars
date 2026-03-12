@@ -198,6 +198,14 @@
             });
         }
 
+        // Mostra nav imediatamente se já logado (sem esperar Firebase)
+        const _cachedRoleEarly = localStorage.getItem('userRole');
+        if (_cachedRoleEarly) {
+            applyNavRole(_cachedRoleEarly);
+            document.getElementById('bottomNav').classList.remove('hidden');
+            document.getElementById('bottomNav').classList.add('block');
+        }
+
         // Aplica active state na nav
         function applyActiveNav() {
             const path = window.location.pathname;
@@ -221,12 +229,16 @@
             const isSupervisor = role === 'supervisor' || role === 'admin';
             const isLeader = role === 'lider' || role === 'admin' || role === 'supervisor';
 
-            if (isLeader) { const el = document.getElementById('nav-monitor'); el.classList.remove('hidden'); el.classList.add('flex'); }
+            function show(id) { const el = document.getElementById(id); if (el) { el.classList.remove('hidden'); el.classList.add('flex'); } }
+            function hide(id) { const el = document.getElementById(id); if (el) { el.classList.add('hidden'); el.classList.remove('flex'); } }
+
+            if (isLeader) show('nav-monitor');
             if (isAdmin) {
-                const ga = document.getElementById('nav-admin'); ga.classList.remove('hidden'); ga.classList.add('flex');
-                const gg = document.getElementById('nav-gestao'); gg.classList.remove('hidden'); gg.classList.add('flex');
+                show('nav-admin');
+                show('nav-gestao');
+                hide('nav-pgm'); // Admin usa Gestão em vez de PGM
             } else if (isSupervisor) {
-                const gg = document.getElementById('nav-gestao'); gg.classList.remove('hidden'); gg.classList.add('flex');
+                show('nav-gestao');
             }
         }
 

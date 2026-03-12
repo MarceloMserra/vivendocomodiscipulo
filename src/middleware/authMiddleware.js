@@ -61,4 +61,23 @@ const requireAuth = (req, res, next) => {
     next();
 };
 
-module.exports = { verifyToken, requireAuth };
+/**
+ * Middleware de Role baseado em Firestore
+ * minRole: 'lider' | 'supervisor' | 'admin'
+ */
+const { db } = require('../config/firebase');
+const requireRole = (minRole) => async (req, res, next) => {
+    if (!req.user) return req.path.startsWith('/api') ? res.status(401).json({ error: 'Não autenticado' }) : res.redirect('/login');
+    try {
+        const doc = await db.collection('users').doc(req.user.uid).get();
+        const roles = doc.exists ? (doc.data().roles || {}) : {};
+        const isAdmin = !!roles.admin;
+        const isSupervisor = !!roles.supervisor || isAdmin;
+        const isLeader = !!roles.lider || !!roles.leader || isSupervisor;
+        const ok = minRole === 'admin' ? isAdmin : minRole === 'supervisor' ? isSupervisor : isLeader;
+        if (ok) return next();
+    } catch (e) {}
+    return req.path.startsWith('/api') ? res.status(403).json({ error: 'Acesso negado.' }) : res.redirect('/');
+};
+
+module.exports = { verifyToken, requireAuth, requireRole };
