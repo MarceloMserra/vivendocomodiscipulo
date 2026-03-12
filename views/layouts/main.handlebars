@@ -225,6 +225,21 @@
             });
         }
 
+        // Aplica abas no nav baseado no role
+        function applyNavRole(role) {
+            const isAdmin = role === 'admin';
+            const isSupervisor = role === 'supervisor' || role === 'admin';
+            const isLeader = role === 'lider' || role === 'admin' || role === 'supervisor';
+
+            if (isLeader) document.getElementById('nav-monitor').classList.remove('hidden');
+            if (isAdmin) {
+                document.getElementById('nav-admin').classList.remove('hidden');
+                document.getElementById('nav-gestao').classList.remove('hidden');
+            } else if (isSupervisor) {
+                document.getElementById('nav-gestao').classList.remove('hidden');
+            }
+        }
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 // Renova o cookie de sessão (isolado para não quebrar o resto)
@@ -232,6 +247,14 @@
                     document.cookie = `session=${token}; path=/; max-age=3600; SameSite=Strict`;
                 }).catch(() => {});
 
+                // Mostra nav imediatamente com role do localStorage (sem esperar Firestore)
+                const cachedRole = localStorage.getItem('userRole');
+                if (cachedRole) applyNavRole(cachedRole);
+
+                document.getElementById('bottomNav').classList.remove('hidden');
+                document.getElementById('bottomNav').classList.add('flex');
+
+                // Busca dados atualizados do Firestore em segundo plano
                 try {
                     const userDoc = await getDoc(doc(db, "users", user.uid));
                     if (userDoc.exists()) {
@@ -239,12 +262,11 @@
                         const fullName = d.name || d.displayName || "Usuário";
                         document.getElementById('userGreeting').innerText = `Olá, ${fullName.split(' ')[0]}!`;
 
-                        // Normalize Role for LocalStorage (Prioritize: Admin > Supervisor > Leader > Member)
                         let normalizedRole = d.role;
                         if (!normalizedRole || normalizedRole === 'undefined') {
                             if (d.roles?.admin) normalizedRole = 'admin';
                             else if (d.roles?.supervisor) normalizedRole = 'supervisor';
-                            else if (d.roles?.leader) normalizedRole = 'lider';
+                            else if (d.roles?.lider || d.roles?.leader) normalizedRole = 'lider';
                             else normalizedRole = 'membro';
                         }
 
@@ -252,34 +274,26 @@
                         localStorage.setItem('userName', fullName);
                         localStorage.setItem('userRole', normalizedRole);
 
-                        if (d.photoUrl) {
-                            document.getElementById('headerProfileImg').src = d.photoUrl;
+                        // Foto — ignora base64 (muito pesado), usa só URLs externas
+                        const photo = d.photoUrl && !d.photoUrl.startsWith('data:') ? d.photoUrl
+                                    : d.photoURL && !d.photoURL.startsWith('data:') ? d.photoURL
+                                    : null;
+                        if (photo) {
+                            document.getElementById('headerProfileImg').src = photo;
                             document.getElementById('headerProfileImg').classList.remove('hidden');
                             document.getElementById('headerInitials').classList.add('hidden');
                         }
-                        const isSupervisor = d.role === 'supervisor' || d.roles?.supervisor;
-                        const isAdmin = d.role === 'admin' || d.roles?.admin;
-                        const isLeader = d.role === 'lider' || d.roles?.leader;
 
-                        if (isAdmin || isSupervisor || isLeader) {
-                            document.getElementById('nav-monitor').classList.remove('hidden');
-                        }
-
-                        if (isAdmin) {
-                            document.getElementById('nav-admin').classList.remove('hidden');
-                            document.getElementById('nav-gestao').classList.remove('hidden');
-                        } else if (isSupervisor) {
-                            document.getElementById('nav-gestao').classList.remove('hidden');
-                        }
+                        // Atualiza nav com role definitivo do Firestore
+                        applyNavRole(normalizedRole);
                     }
-                } catch (e) { console.error(e); }
-                document.getElementById('bottomNav').classList.remove('hidden');
-                document.getElementById('bottomNav').classList.add('flex');
+                } catch (e) { console.error('Nav error:', e); }
+
             } else if (!['/login', '/register'].includes(window.location.pathname)) {
                 window.location.href = '/login';
             }
         });
-        window.logout = () => signOut(auth).then(() => window.location.href = '/login');
+        window.logout = () => signOut(auth).then(() => { localStorage.clear(); window.location.href = '/login'; });
     </script>
 </body>
 
