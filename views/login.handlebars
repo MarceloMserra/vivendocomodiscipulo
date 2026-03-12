@@ -73,6 +73,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // SUAS CHAVES FIREBASE
     const firebaseConfig = {
@@ -87,6 +88,7 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -103,13 +105,33 @@
             const result = await signInWithEmailAndPassword(auth, email, password);
             const user = result.user;
 
-            // Pega o token Firebase e salva como cookie para o servidor reconhecer
+            // Salva token como cookie para o servidor reconhecer
             const idToken = await user.getIdToken();
             document.cookie = `session=${idToken}; path=/; max-age=3600; SameSite=Strict`;
 
-            // Salva no localStorage para uso client-side
+            // Lê role do custom claim do token (mais rápido e confiável)
+            let role = 'membro';
+            try {
+                const tokenResult = await user.getIdTokenResult(true); // força refresh do token
+                if (tokenResult.claims?.role) {
+                    role = tokenResult.claims.role;
+                } else {
+                    // Fallback: busca no Firestore
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (userDoc.exists()) {
+                        const d = userDoc.data();
+                        const name = d.displayName || d.name || '';
+                        if (d.role === 'admin' || d.roles?.admin) role = 'admin';
+                        else if (d.role === 'supervisor' || d.roles?.supervisor) role = 'supervisor';
+                        else if (d.role === 'lider' || d.roles?.lider || d.roles?.leader) role = 'lider';
+                        localStorage.setItem('userName', name);
+                    }
+                }
+            } catch (e) {}
+
             localStorage.setItem('userUid', user.uid);
             localStorage.setItem('userEmail', user.email);
+            localStorage.setItem('userRole', role);
 
             window.location.href = '/';
 
