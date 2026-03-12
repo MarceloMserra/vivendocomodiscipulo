@@ -29,8 +29,7 @@ exports.getMonitoringData = async (req, res) => {
         }
 
         // --- Parameters (Body for POST) ---
-        const { startDate, endDate, pgmId, selectedLeaderId } = req.body; // pgmId for Dashboard Filter, selectedLeaderId for Input Form
-        console.log(`[DEBUG_MONITOR] Request Params: Start=${startDate}, End=${endDate}, PGM=${pgmId}, TargetLeader=${selectedLeaderId}`);
+        const { startDate, endDate, pgmId, selectedLeaderId } = req.body;
 
         const responseData = {
             user: {
@@ -57,13 +56,10 @@ exports.getMonitoringData = async (req, res) => {
             if (userData.isAdmin() || userData.isSupervisor()) {
                 // Fetch ALL Leaders for the dropdown
                 try {
-                    console.log("[DEBUG_MONITOR] Fetching Available Leaders...");
                     const leadersSnap = await db.collection('users')
                         .where('roles.lider', '==', true)
                         .orderBy('name_lower')
                         .get();
-
-                    console.log(`[DEBUG_MONITOR] Found ${leadersSnap.size} leaders.`);
                     leadersSnap.forEach(doc => {
                         const d = doc.data();
                         responseData.availableLeaders.push({
@@ -72,8 +68,7 @@ exports.getMonitoringData = async (req, res) => {
                         });
                     });
                 } catch (err) {
-                    console.error("[DEBUG_MONITOR] Error fetching leaders (Index missing?):", err.message);
-                    // Don't crash, just proceed with empty list
+                    // Continua com lista vazia se índice não existir
                 }
 
                 if (selectedLeaderId) {
@@ -84,7 +79,6 @@ exports.getMonitoringData = async (req, res) => {
             }
 
             if (targetUid) {
-                console.log(`[DEBUG_MONITOR] Fetching Members for Leader: ${targetUid}`);
                 try {
                     const membersSnapshot = await db.collection('users')
                         .where('leaderUid', '==', targetUid)
@@ -110,20 +104,14 @@ exports.getMonitoringData = async (req, res) => {
         }
 
         // --- 2. Load Data for DASHBOARD ---
-        // --- 2. Load Data for DASHBOARD ---
         if (canViewDashboard) {
-            console.log("[DEBUG_MONITOR] Preparing Dashboard Query (PGM Model)...");
 
             // 2.1 Fetch PGMs Metadata (Needed for mapping IDs to Names/Supervisors)
             const pgmsSnap = await db.collection('pgms').get();
-            const pgmMap = {}; // id -> { name, supervisorName, supervisorUid }
+            const pgmMap = {};
             pgmsSnap.forEach(doc => {
-                pgmMap[doc.id] = {
-                    id: doc.id,
-                    ...doc.data()
-                };
+                pgmMap[doc.id] = { id: doc.id, ...doc.data() };
             });
-            console.log(`[DEBUG_MONITOR] Loaded ${Object.keys(pgmMap).length} PGMs.`);
 
             let query = db.collection('meetings');
 
@@ -161,7 +149,6 @@ exports.getMonitoringData = async (req, res) => {
             query = query.orderBy('date', 'desc');
 
             const meetingsSnap = await query.get();
-            console.log(`[DEBUG_MONITOR] Query Returned ${meetingsSnap.size} meetings.`);
 
             // Aggregation
             let totalMeetings = 0;
@@ -253,7 +240,6 @@ exports.getMonitoringData = async (req, res) => {
             };
         }
 
-        console.log("[DEBUG_MONITOR] Sending Response JSON...");
         res.json(responseData);
 
     } catch (e) {

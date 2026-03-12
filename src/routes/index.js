@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { uploadImage, uploadPDF } = require('../config/upload');
+const { requireAuth } = require('../middleware/authMiddleware');
 
 // Controllers
 const homeController = require('../controllers/homeController');
@@ -12,62 +13,62 @@ const managementController = require('../controllers/managementController');
 
 // --- Routes ---
 
-// 1. Home & Auth Pages
-router.get('/', homeController.getHomePage);
+// 1. Páginas públicas (não exigem login)
 router.get('/login', homeController.getLoginPage);
 router.get('/register', homeController.getRegisterPage);
-router.get('/profile', homeController.getProfilePage);
 
-// 2. Admin Pages
-router.get('/admin', adminController.getAdminPage);
-router.get('/pgm', pgmController.getPgmPage);
-router.get('/gestao', managementController.getManagementPage);
+// 2. Páginas e APIs protegidas (exigem login)
+router.get('/', requireAuth, homeController.getHomePage);
+router.get('/profile', requireAuth, homeController.getProfilePage);
+router.get('/admin', requireAuth, adminController.getAdminPage);
+router.get('/pgm', requireAuth, pgmController.getPgmPage);
+router.get('/gestao', requireAuth, managementController.getManagementPage);
 
-// 2.1 API - Management (New Scalable)
-router.post('/api/gestao/stats', managementController.getDashboardStats);
-router.post('/api/gestao/users', managementController.getUsersPaginated);
-router.post('/api/gestao/update', managementController.updateUser);
-router.post('/api/gestao/groups', managementController.getGroupsList);
+// 2.1 API - Management
+router.post('/api/gestao/stats', requireAuth, managementController.getDashboardStats);
+router.post('/api/gestao/users', requireAuth, managementController.getUsersPaginated);
+router.post('/api/gestao/update', requireAuth, managementController.updateUser);
+router.post('/api/gestao/groups', requireAuth, managementController.getGroupsList);
 
 // 3. API - User Profile
-router.post('/api/profile/update', uploadImage.single("photo"), userController.updateProfile); // Legacy
-router.post('/api/profile/upload-photo', userController.uploadPhoto); // New Storage API
-router.post('/api/user-data', userController.getUserData);
+router.post('/api/profile/update', requireAuth, uploadImage.single("photo"), userController.updateProfile);
+router.post('/api/profile/upload-photo', requireAuth, userController.uploadPhoto);
+router.post('/api/user-data', requireAuth, userController.getUserData);
 
 // 4. API - PGM
-router.post('/api/my-pgm', pgmController.getMyPgm);
-router.post('/pgm/add', pgmController.addMember);
-router.post('/pgm/remove', pgmController.removeMember);
-router.post('/pgm/post', pgmController.addPost);
-router.post('/pgm/delete-post', pgmController.deletePost);
-router.post('/pgm/event/add', pgmController.addEvent);
-router.post('/pgm/event/delete', pgmController.deleteEvent);
-router.post('/api/pgm/request', pgmController.requestEntry);
-router.post('/api/supervisor/data', pgmController.getSupervisorData);
-router.post('/api/supervisor/metrics', pgmController.getSupervisorMetrics); // New Route
-router.post('/api/supervisor/group-details', pgmController.getGroupDetails); // V3 Supervisor Drill-Down
-router.get('/rede/mapa', pgmController.getNetworkMapPage); // Visual Map View
-router.post('/api/rede/tree', pgmController.getNetworkTreeAPI); // Visual Map Data
-router.post('/api/supervisor/assign', pgmController.assignMember);
-router.post('/api/supervisor/reject', pgmController.rejectRequest); // New Route
-router.post('/api/supervisor/promote', pgmController.promoteToLeader);
-router.post('/api/supervisor/demote', pgmController.demoteLeader);
+router.post('/api/my-pgm', requireAuth, pgmController.getMyPgm);
+router.post('/pgm/add', requireAuth, pgmController.addMember);
+router.post('/pgm/remove', requireAuth, pgmController.removeMember);
+router.post('/pgm/post', requireAuth, pgmController.addPost);
+router.post('/pgm/delete-post', requireAuth, pgmController.deletePost);
+router.post('/pgm/event/add', requireAuth, pgmController.addEvent);
+router.post('/pgm/event/delete', requireAuth, pgmController.deleteEvent);
+router.post('/api/pgm/request', requireAuth, pgmController.requestEntry);
+router.post('/api/supervisor/data', requireAuth, pgmController.getSupervisorData);
+router.post('/api/supervisor/metrics', requireAuth, pgmController.getSupervisorMetrics);
+router.post('/api/supervisor/group-details', requireAuth, pgmController.getGroupDetails);
+router.get('/rede/mapa', requireAuth, pgmController.getNetworkMapPage);
+router.post('/api/rede/tree', requireAuth, pgmController.getNetworkTreeAPI);
+router.post('/api/supervisor/assign', requireAuth, pgmController.assignMember);
+router.post('/api/supervisor/reject', requireAuth, pgmController.rejectRequest);
+router.post('/api/supervisor/promote', requireAuth, pgmController.promoteToLeader);
+router.post('/api/supervisor/demote', requireAuth, pgmController.demoteLeader);
 
-// 4.1 PGM Reports (V3 Module 2)
-router.get('/pgm/report', pgmController.getReportPage);
-router.post('/pgm/report/submit', pgmController.submitReport);
-router.get('/pgm/gallery', pgmController.getGalleryPage);
-router.post('/api/pgm/gallery-data', pgmController.getGalleryData);
+// 4.1 PGM Reports
+router.get('/pgm/report', requireAuth, pgmController.getReportPage);
+router.post('/pgm/report/submit', requireAuth, pgmController.submitReport);
+router.get('/pgm/gallery', requireAuth, pgmController.getGalleryPage);
+router.post('/api/pgm/gallery-data', requireAuth, pgmController.getGalleryData);
 
 // 5. API - Comments
-router.post('/comentar', homeController.postComment);
-router.post('/comentario/delete', homeController.deleteComment);
+router.post('/comentar', requireAuth, homeController.postComment);
+router.post('/comentario/delete', requireAuth, homeController.deleteComment);
 
 // 6. API - Admin
-router.post('/api/admin/users', adminController.getUsers);
-router.post('/api/admin/update-role', adminController.updateRole);
+router.post('/api/admin/users', requireAuth, adminController.getUsers);
+router.post('/api/admin/update-role', requireAuth, adminController.updateRole);
 
 // 7. Upload PDF (Content)
-router.post('/upload-pdf', uploadPDF.single("boletim"), contentController.uploadPdf);
+router.post('/upload-pdf', requireAuth, uploadPDF.single("boletim"), contentController.uploadPdf);
 
 module.exports = router;

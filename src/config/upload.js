@@ -27,7 +27,10 @@ const storageProfile = multer.diskStorage({
         cb(null, dir);
     },
     filename: (req, file, cb) => {
-        cb(null, Date.now() + "_" + file.originalname.replace(/\s+/g, '_'));
+        // Extrai apenas a extensão e gera nome seguro — evita Path Traversal
+        const ext = path.extname(file.originalname).replace(/[^a-zA-Z0-9.]/g, '').toLowerCase();
+        const safeName = Date.now() + '_' + Math.random().toString(36).slice(2, 8) + ext;
+        cb(null, safeName);
     }
 });
 

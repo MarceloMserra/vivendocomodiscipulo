@@ -79,10 +79,10 @@ exports.addMember = async (req, res) => {
         if (!leader || (!leader.isLeader() && !leader.isAdmin())) return res.status(403).send("Negado");
 
         const group = await Group.findByLeader(leaderUid);
-        if (!group) return res.send("<script>alert('Você não tem grupo!');window.location.href='/pgm'</script>");
+        if (!group) return res.status(404).json({ error: 'Você não tem grupo cadastrado.' });
 
         const usersSnap = await db.collection("users").where("email", "==", memberEmail).get();
-        if (usersSnap.empty) return res.send("<script>alert('E-mail não achado');window.location.href='/pgm'</script>");
+        if (usersSnap.empty) return res.status(404).json({ error: 'Nenhum usuário encontrado com este e-mail.' });
 
         const memberUid = usersSnap.docs[0].id;
         await User.update(memberUid, { pgmId: group.id, groupId: group.id }); // Dual update for compatibility
@@ -114,13 +114,16 @@ exports.deletePost = async (req, res) => {
 exports.addEvent = async (req, res) => {
     try {
         const { pgmId, title, location, date, time } = req.body;
-        const group = await Group.findById(pgmId); // ensure group exists
+        if (!pgmId || !title || !date || !time) return res.status(400).json({ error: 'Dados incompletos.' });
+
+        const group = await Group.findById(pgmId);
+        if (!group) return res.status(404).json({ error: 'Grupo não encontrado.' });
 
         const eventDate = new Date(`${date}T${time}:00`);
         await group.addEvent({ title, location, date: admin.firestore.Timestamp.fromDate(eventDate) });
 
         res.redirect("/pgm");
-    } catch (e) { res.status(500).send(e.message); }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 };
 exports.deleteEvent = async (req, res) => {
     try { await db.collection("pgm_events").doc(req.body.eventId).delete(); res.redirect("/pgm"); } catch (e) { res.status(500).send(e.message); }

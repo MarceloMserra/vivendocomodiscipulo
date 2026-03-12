@@ -4,6 +4,7 @@ const path = require("path");
 require("dotenv").config();
 
 const cookieParser = require("cookie-parser");
+const { verifyToken } = require('./src/middleware/authMiddleware');
 
 // 1. Initial Config
 const app = express();
@@ -11,11 +12,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// DEBUG MIDDLEWARE
-app.use((req, res, next) => {
-  console.log(`[REQUEST] ${req.method} ${req.url}`);
-  next();
-});
+// Autenticação global — popula req.user em todas as rotas
+app.use(verifyToken);
 
 // 2. Static Files
 app.use(express.static("public"));
@@ -43,5 +41,5 @@ app.use('/', routes);
 app.use('/monitoring', meetingRoutes);
 
 // 5. Start Server
-const PORT = 3000;
-app.listen(PORT, () => console.log(`🚀 http://localhost:${PORT}`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor rodando em http://localhost:${PORT}`));

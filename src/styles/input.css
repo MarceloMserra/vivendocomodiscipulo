@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@source "../../views/**/*.{handlebars,html,js}";
+@source "../../public/js/**/*.js";
+
+@theme {
+    --font-sans: 'Montserrat', sans-serif;
+    --font-serif: 'Merriweather', serif;
+
+    --color-imbb-navy: #0F265C;
+    --color-imbb-blue: #1E40AF;
+    --color-imbb-gold: #C5A059;
+    --color-imbb-dark: #0a0a0a;
+
+    --backdrop-blur-xs: 2px;
+}

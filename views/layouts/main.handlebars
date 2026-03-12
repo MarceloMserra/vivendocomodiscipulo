@@ -16,34 +16,7 @@
 
     <title>Vivendo como Discípulo</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,700;1,400&family=Montserrat:wght@300;400;600;700&display=swap"
-        rel="stylesheet">
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Montserrat', 'sans-serif'],
-                        serif: ['Merriweather', 'serif']
-                    },
-                    colors: {
-                        imbb: {
-                            navy: '#0F265C',
-                            blue: '#1E40AF',
-                            gold: '#C5A059',
-                            dark: '#0a0a0a'
-                        }
-                    },
-                    backdropBlur: {
-                        xs: '2px',
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="/css/styles.css">
     <style>
         body {
             padding-top: env(safe-area-inset-top);
@@ -59,11 +32,15 @@
             height: 100%;
             z-index: -2;
             background-color: #0F265C;
-            background-image: url('/img/background.jpg');
+            background-image: url('/img/background.webp');
             background-repeat: no-repeat;
             background-position: center center;
-            background-attachment: fixed;
             background-size: cover;
+        }
+
+        /* Fallback para navegadores sem suporte a WebP */
+        @supports not (background-image: url('/img/background.webp')) {
+            .app-bg { background-image: url('/img/background.jpg'); }
         }
 
         .app-overlay {
@@ -77,22 +54,27 @@
         }
 
         .glass-panel {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.12);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* blur apenas em desktops — muito pesado em mobile */
+        @media (min-width: 768px) {
+            .glass-panel {
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
+            }
         }
 
         .glass-panel:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.18);
             border: 1px solid rgba(255, 255, 255, 0.3);
             transform: translateY(-2px);
         }
 
         .glass-reader {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.97);
         }
 
         .no-scrollbar::-webkit-scrollbar {
@@ -134,7 +116,7 @@
 
         <nav id="bottomNav" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50 hidden">
             <div
-                class="absolute inset-0 bg-[#0F265C]/80 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl shadow-black/50">
+                class="absolute inset-0 bg-[#0F265C]/90 rounded-full border border-white/20 shadow-2xl shadow-black/50">
             </div>
             <div class="relative flex justify-around items-center h-20 w-full px-2">
                 <a href="/" class="group relative w-16 h-full flex flex-col items-center justify-center">
@@ -236,12 +218,10 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- REGISTRAR SERVICE WORKER (O Segredo do PWA) ---
+        // --- REGISTRAR SERVICE WORKER (PWA) ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('Service Worker Registrado!', reg))
-                    .catch(err => console.log('Erro Service Worker:', err));
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
             });
         }
 
