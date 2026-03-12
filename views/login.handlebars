@@ -101,16 +101,16 @@
             btn.disabled = true;
 
             const result = await signInWithEmailAndPassword(auth, email, password);
-
-            // Save to LocalStorage for other pages (PGM, Gestao)
             const user = result.user;
+
+            // Pega o token Firebase e salva como cookie para o servidor reconhecer
+            const idToken = await user.getIdToken();
+            document.cookie = `session=${idToken}; path=/; max-age=3600; SameSite=Strict`;
+
+            // Salva no localStorage para uso client-side
             localStorage.setItem('userUid', user.uid);
             localStorage.setItem('userEmail', user.email);
 
-            // Fetch Claim/Role to save userName/Role? 
-            // Better to let Home page handle detailed fetching, but UID is critical.
-
-            // Sucesso
             window.location.href = '/';
 
         } catch (error) {

@@ -218,6 +218,10 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 try {
+                    // Renova o cookie de sessão a cada carregamento de página
+                    const idToken = await user.getIdToken();
+                    document.cookie = `session=${idToken}; path=/; max-age=3600; SameSite=Strict`;
+
                     const userDoc = await getDoc(doc(db, "users", user.uid));
                     if (userDoc.exists()) {
                         const d = userDoc.data();
